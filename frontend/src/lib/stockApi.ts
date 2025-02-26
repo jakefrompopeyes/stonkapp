@@ -1,4 +1,5 @@
 import api from './api';
+import { fetchInsiderTrading } from './supabaseUtils';
 
 export interface StockSearchResult {
   ticker: string;
@@ -213,6 +214,18 @@ export const getFinancialData = async (ticker: string): Promise<FinancialData[]>
  */
 export const getInsiderTransactions = async (ticker: string): Promise<InsiderTransaction[]> => {
   try {
+    // Try to get data from Supabase first
+    try {
+      const supabaseData = await fetchInsiderTrading(ticker);
+      if (supabaseData && supabaseData.length > 0) {
+        console.log('Using insider trading data from Supabase');
+        return supabaseData;
+      }
+    } catch (supabaseError) {
+      console.warn('Error fetching from Supabase, falling back to API:', supabaseError);
+    }
+    
+    // Fall back to API if Supabase data is not available
     const response = await api.get(`/api/stocks/insider-transactions/${ticker}`);
     return response.data.transactions.data || [];
   } catch (error) {
