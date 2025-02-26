@@ -3,7 +3,15 @@
  * Run this script with: npx ts-node src/scripts/testSupabaseConnection.ts
  */
 
-import { supabase } from '../lib/supabase';
+// Using require instead of import for CommonJS compatibility
+const { createClient } = require('@supabase/supabase-js');
+
+// These values should be in your .env.local file
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://skmllawzddrnfjwzoaze.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbWxsYXd6ZGRybmZqd3pvYXplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1NjI4NDksImV4cCI6MjA1NjEzODg0OX0.rslAR876PSBes7VGR0tcx1IHjJPVTfZtIZ8FckJRe_0';
+
+// Create a Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function testSupabaseConnection() {
   console.log('Testing Supabase connection...');
