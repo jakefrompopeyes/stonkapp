@@ -30,8 +30,8 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
           company => company.ticker && company.name
         );
         
-        // Limit to top 10 companies for better UI
-        const topCompanies = filteredCompanies.slice(0, 10);
+        // Limit to top 6 companies for grid layout
+        const topCompanies = filteredCompanies.slice(0, 6);
         
         setCompanies(topCompanies);
       } catch (err) {
@@ -44,12 +44,6 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
     
     fetchRelatedCompanies();
   }, [ticker]);
-
-  // Format large numbers with commas
-  const formatNumber = (num?: number) => {
-    if (num === undefined || num === null) return 'N/A';
-    return num.toLocaleString();
-  };
 
   // Format currency
   const formatCurrency = (num?: number) => {
@@ -129,56 +123,55 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
         Similar Companies & Competitors
       </h2>
       
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Company
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Ticker
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Market Cap
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                7-Day Change
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {companies.map((company, index) => (
-              <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  <Link href={`/stocks/${company.ticker}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-                    {company.name || company.ticker}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {companies.map((company, index) => (
+          <div 
+            key={index} 
+            className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+          >
+            <Link 
+              href={`/stock/${company.ticker}`} 
+              className="block"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-gray-900 dark:text-white text-base truncate" title={company.name || company.ticker}>
+                  {company.name || company.ticker}
+                </h3>
+                <span className="text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">
                   {company.ticker}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                  {formatMarketCap(company.market_cap)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                  {formatCurrency(company.price)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                  {formatPercentChange(company.percentChange)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </span>
+              </div>
+              
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Market Cap:</span>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {formatMarketCap(company.market_cap)}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Price:</span>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {formatCurrency(company.price)}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">7-Day Change:</span>
+                  <span className="text-xs font-medium">
+                    {formatPercentChange(company.percentChange)}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        ))}
       </div>
       
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         <p>
-          Data shows companies related to {ticker} based on industry classification, market behavior, and news correlation. Market cap values are sorted from largest to smallest.
+          Data shows companies related to {ticker} based on industry classification, market behavior, and news correlation.
         </p>
       </div>
     </div>
