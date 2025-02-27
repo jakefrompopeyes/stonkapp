@@ -335,22 +335,22 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
       
       // For transactions with a price of 0 but with a value and share count, we can calculate the price
       // This is particularly important for sales and purchases
-      const calculatedPrice = (item.value && item.share && item.share > 0) 
-        ? Math.abs(item.value / item.share) 
+      const calculatedPrice = (item.value && item.change && item.change !== 0) 
+        ? Math.abs(item.value / item.change) 
         : price;
       
-      // Use the share field for sharesTraded - this is the actual number of shares in the transaction
-      // The change field represents the net change in ownership position
+      // IMPORTANT: The 'change' field represents the actual number of shares traded in the transaction
+      // The 'share' field represents the total shares held by the insider after the transaction
       return {
         name: item.name || '',
         filingDate: item.filingDate || '',
         transactionDate: item.transactionDate || '',
         transactionType: item.transactionCode || '',  // Using transactionCode as type
-        sharesTraded: Math.abs(item.share || 0),  // Use share field for the transaction size
+        sharesTraded: Math.abs(item.change || 0),  // Use change field for the transaction size
         price: calculatedPrice,
         transactionCode: item.transactionCode || '',
         isDerivative: item.isDerivative === true,  // Ensure boolean value
-        change: Math.abs(item.change || 0),  // This is the net change in ownership position
+        change: Math.abs(item.change || 0),  // This is the actual number of shares traded
         transactionPrice: calculatedPrice
       };
     });
