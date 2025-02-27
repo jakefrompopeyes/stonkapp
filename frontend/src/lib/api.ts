@@ -5,12 +5,31 @@ import { supabase } from './supabase';
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
 const POLYGON_BASE_URL = 'https://api.polygon.io';
 
+// Debug: Log API key status (not the actual key for security)
+console.log('Polygon API Key Status:', POLYGON_API_KEY ? 'Present (length: ' + POLYGON_API_KEY.length + ')' : 'Missing');
+
 // Create Polygon API client
 const polygonApi = axios.create({
   baseURL: POLYGON_BASE_URL,
   params: {
     apiKey: POLYGON_API_KEY
   }
+});
+
+// Add request interceptor to log API calls for debugging
+polygonApi.interceptors.request.use(request => {
+  console.log('Polygon API Request:', request.url, request.params);
+  return request;
+}, error => {
+  return Promise.reject(error);
+});
+
+// Add response interceptor to log errors
+polygonApi.interceptors.response.use(response => {
+  return response;
+}, error => {
+  console.error('Polygon API Error:', error.response?.status, error.response?.data || error.message);
+  return Promise.reject(error);
 });
 
 // We'll keep this for backward compatibility, but we'll primarily use Supabase
@@ -59,15 +78,28 @@ export const getServerStatus = async (): Promise<string> => {
 // Search for stocks
 export const searchStocks = async (query: string) => {
   try {
+    // Log the search query for debugging
+    console.log('Searching stocks for:', query);
+    
+    // Make sure we have an API key
+    if (!POLYGON_API_KEY) {
+      console.error('Polygon API Key is missing!');
+      throw new Error('API key is required for stock search');
+    }
+    
     const response = await polygonApi.get('/v3/reference/tickers', {
       params: {
         search: query,
         active: true,
         sort: 'ticker',
         order: 'asc',
-        limit: 10
+        limit: 10,
+        apiKey: POLYGON_API_KEY // Explicitly include the API key
       }
     });
+    
+    // Log successful response
+    console.log('Search results count:', response.data.results?.length || 0);
     
     // Transform the response to match our expected format
     const results = response.data.results.map((item: any) => ({
