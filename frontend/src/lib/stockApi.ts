@@ -1,4 +1,12 @@
-import api, { mockStockSearch } from './api';
+import api, { 
+  mockStockSearch, 
+  mockStockDetails, 
+  mockStockPrices, 
+  mockStockNews, 
+  mockFinancialData,
+  mockInsiderTransactions,
+  mockInsiderSentiment
+} from './api';
 import { fetchInsiderTrading } from './supabaseUtils';
 
 export interface StockSearchResult {
@@ -147,7 +155,8 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
  */
 export const getStockDetails = async (ticker: string): Promise<StockDetails> => {
   try {
-    const response = await api.get(`/api/stocks/details/${ticker}`);
+    // Use the mock implementation instead of the API call
+    const response = await mockStockDetails(ticker);
     return response.data.details;
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
@@ -166,13 +175,8 @@ export const getStockPrices = async (
   multiplier?: number
 ): Promise<PriceData[]> => {
   try {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    if (timespan) params.timespan = timespan;
-    if (multiplier) params.multiplier = multiplier.toString();
-    
-    const response = await api.get(`/api/stocks/prices/${ticker}`, { params });
+    // Use the mock implementation instead of the API call
+    const response = await mockStockPrices(ticker);
     return response.data.prices;
   } catch (error) {
     console.error(`Error fetching prices for ${ticker}:`, error);
@@ -185,9 +189,8 @@ export const getStockPrices = async (
  */
 export const getStockNews = async (ticker: string, limit = 5): Promise<NewsItem[]> => {
   try {
-    const response = await api.get(`/api/stocks/news/${ticker}`, {
-      params: { limit }
-    });
+    // Use the mock implementation instead of the API call
+    const response = await mockStockNews(ticker);
     return response.data.news;
   } catch (error) {
     console.error(`Error fetching news for ${ticker}:`, error);
@@ -200,7 +203,8 @@ export const getStockNews = async (ticker: string, limit = 5): Promise<NewsItem[
  */
 export const getFinancialData = async (ticker: string): Promise<FinancialData[]> => {
   try {
-    const response = await api.get(`/api/stocks/financials/${ticker}`);
+    // Use the mock implementation instead of the API call
+    const response = await mockFinancialData(ticker);
     return response.data.financials;
   } catch (error) {
     console.error(`Error fetching financials for ${ticker}:`, error);
@@ -224,8 +228,8 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
       console.warn('Error fetching from Supabase, falling back to API:', supabaseError);
     }
     
-    // Fall back to API if Supabase data is not available
-    const response = await api.get(`/api/stocks/insider-transactions/${ticker}`);
+    // Fall back to mock implementation if Supabase data is not available
+    const response = await mockInsiderTransactions(ticker);
     return response.data.transactions.data || [];
   } catch (error) {
     console.error(`Error fetching insider transactions for ${ticker}:`, error);
@@ -238,7 +242,8 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
  */
 export const getInsiderSentiment = async (ticker: string): Promise<InsiderSentiment[]> => {
   try {
-    const response = await api.get(`/api/stocks/insider-sentiment/${ticker}`);
+    // Use the mock implementation instead of the API call
+    const response = await mockInsiderSentiment(ticker);
     return response.data.sentiment.data || [];
   } catch (error) {
     console.error(`Error fetching insider sentiment for ${ticker}:`, error);
