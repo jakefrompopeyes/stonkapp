@@ -21,10 +21,14 @@ polygonApi.interceptors.request.use(request => {
   // Add the API key as a query parameter to every request
   request.params = {
     ...request.params,
-    apiKey: POLYGON_API_KEY
+    apikey: POLYGON_API_KEY  // Changed from apiKey to apikey (lowercase)
   };
   
-  console.log('Polygon API Request:', request.url, 'API Key Present:', !!POLYGON_API_KEY);
+  // More detailed logging
+  console.log('Polygon API Request:', request.method, request.url);
+  console.log('Request params:', request.params);
+  console.log('API Key Present:', !!POLYGON_API_KEY, 'Length:', POLYGON_API_KEY?.length || 0);
+  
   return request;
 }, error => {
   return Promise.reject(error);
@@ -32,9 +36,33 @@ polygonApi.interceptors.request.use(request => {
 
 // Add response interceptor to log errors
 polygonApi.interceptors.response.use(response => {
+  // Log successful responses
+  console.log('Polygon API Response Status:', response.status);
+  console.log('Response data preview:', 
+    response.data && typeof response.data === 'object' 
+      ? `Results: ${response.data.results?.length || 0} items` 
+      : 'No data');
   return response;
 }, error => {
-  console.error('Polygon API Error:', error.response?.status, error.response?.data || error.message);
+  // Enhanced error logging
+  console.error('Polygon API Error:');
+  console.error('- Status:', error.response?.status);
+  console.error('- Status Text:', error.response?.statusText);
+  console.error('- URL:', error.config?.url);
+  console.error('- Params:', error.config?.params);
+  
+  if (error.response?.data) {
+    console.error('- Error Details:', error.response.data);
+  }
+  
+  if (error.response?.status === 401) {
+    console.error('Authentication Error: Please check your API key');
+  } else if (error.response?.status === 403) {
+    console.error('Authorization Error: Your API key may not have access to this endpoint');
+  } else if (error.response?.status === 429) {
+    console.error('Rate Limit Error: You have exceeded your API rate limit');
+  }
+  
   return Promise.reject(error);
 });
 
