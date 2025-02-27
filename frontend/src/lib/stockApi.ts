@@ -8,6 +8,7 @@ import api, {
   getInsiderSentiment as apiGetInsiderSentiment
 } from './api';
 import { fetchInsiderTrading } from './supabaseUtils';
+import { SimpleStockDetails, toSimpleStockDetails } from './stockApiTypes';
 
 export interface StockSearchResult {
   ticker: string;
@@ -158,8 +159,31 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
 export const getStockDetails = async (ticker: string): Promise<StockDetails> => {
   try {
     const response = await apiGetStockDetails(ticker);
-    // Use a type assertion to force TypeScript to accept the return value
-    return response.data.details as StockDetails;
+    
+    // First convert to a simple type that we know works
+    const simpleDetails = toSimpleStockDetails(response.data.details);
+    
+    // Then expand it to include all the StockDetails properties
+    const fullDetails: StockDetails = {
+      ...simpleDetails,
+      homepage_url: response.data.details.homepage_url || '',
+      total_employees: response.data.details.total_employees || 0,
+      list_date: response.data.details.list_date || '',
+      market_cap: response.data.details.market_cap || 0,
+      phone_number: response.data.details.phone_number || '',
+      address: {
+        address1: response.data.details.address?.address1 || '',
+        city: response.data.details.address?.city || '',
+        state: response.data.details.address?.state || '',
+        postal_code: response.data.details.address?.postal_code || '',
+      },
+      sic_code: response.data.details.sic_code || '',
+      sic_description: response.data.details.sic_description || '',
+      ticker_root: response.data.details.ticker_root || response.data.details.ticker,
+      weighted_shares_outstanding: response.data.details.weighted_shares_outstanding || 0,
+    };
+    
+    return fullDetails;
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
     // Return a minimal valid StockDetails object instead of throwing
