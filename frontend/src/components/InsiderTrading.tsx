@@ -145,9 +145,9 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
           isDerivative: t.isDerivative || false,
           transactionDate: t.transactionDate,
           transactionCode: t.transactionCode || 'U', // 'U' for unknown if undefined
-          totalShares: Math.abs(t.change || 0),
+          totalShares: Math.abs(t.sharesTraded || 0), // Use sharesTraded instead of change
           averagePrice: t.transactionPrice || 0,
-          totalValue: Math.abs((t.change || 0) * (t.transactionPrice || 0))
+          totalValue: Math.abs((t.sharesTraded || 0) * (t.transactionPrice || 0)) // Use sharesTraded for value calculation
         });
         return;
       }
@@ -205,7 +205,7 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     let endDate = group[0].transactionDate;
     
     group.forEach(t => {
-      // Use sharesTraded for the number of shares
+      // Use sharesTraded for the number of shares - this is the actual transaction size
       const shares = Math.abs(t.sharesTraded || 0);
       
       // For price, prioritize transactionPrice, then price, defaulting to 0 if neither is available

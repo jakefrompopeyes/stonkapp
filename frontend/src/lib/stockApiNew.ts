@@ -339,16 +339,18 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
         ? Math.abs(item.value / item.share) 
         : price;
       
+      // Use the share field for sharesTraded - this is the actual number of shares in the transaction
+      // The change field represents the net change in ownership position
       return {
         name: item.name || '',
         filingDate: item.filingDate || '',
         transactionDate: item.transactionDate || '',
         transactionType: item.transactionCode || '',  // Using transactionCode as type
-        sharesTraded: Math.abs(item.share || 0),
+        sharesTraded: Math.abs(item.share || 0),  // Use share field for the transaction size
         price: calculatedPrice,
         transactionCode: item.transactionCode || '',
         isDerivative: item.isDerivative === true,  // Ensure boolean value
-        change: Math.abs(item.change || 0),  // Use absolute value of change
+        change: Math.abs(item.change || 0),  // This is the net change in ownership position
         transactionPrice: calculatedPrice
       };
     });
