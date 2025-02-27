@@ -328,20 +328,28 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
     
     // Transform the Finnhub data to match our expected format
     return (data.data || []).map((item: any) => {
-      // Calculate the price - Finnhub might provide it directly or we need to calculate it
-      const price = item.price || (item.share && item.value ? item.value / item.share : 0);
+      // Calculate the price - Finnhub provides it directly in transactionPrice
+      // If transactionPrice is not available, we can try to calculate it from value and share
+      // Note: For many transaction types (like M - Exercise/Conversion), the price might be 0
+      const price = item.transactionPrice || 0;
+      
+      // For transactions with a price of 0 but with a value and share count, we can calculate the price
+      // This is particularly important for sales and purchases
+      const calculatedPrice = (item.value && item.share && item.share > 0) 
+        ? Math.abs(item.value / item.share) 
+        : price;
       
       return {
         name: item.name || '',
         filingDate: item.filingDate || '',
         transactionDate: item.transactionDate || '',
         transactionType: item.transactionCode || '',  // Using transactionCode as type
-        sharesTraded: item.share || 0,
-        price: price,
+        sharesTraded: Math.abs(item.share || 0),
+        price: calculatedPrice,
         transactionCode: item.transactionCode || '',
-        isDerivative: item.securitiesOwned !== undefined,  // Approximation
-        change: item.change || item.share || 0,  // Use share count as change if change is not provided
-        transactionPrice: price
+        isDerivative: item.isDerivative === true,  // Ensure boolean value
+        change: Math.abs(item.change || 0),  // Use absolute value of change
+        transactionPrice: calculatedPrice
       };
     });
   } catch (error) {

@@ -207,11 +207,17 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     group.forEach(t => {
       // Use sharesTraded for the number of shares
       const shares = Math.abs(t.sharesTraded || 0);
-      // Use price for the transaction price, defaulting to 0 if not available
-      const price = t.price || 0;
       
+      // For price, prioritize transactionPrice, then price, defaulting to 0 if neither is available
+      const price = t.transactionPrice || t.price || 0;
+      
+      // Skip transactions with zero price for average calculation, but still count the shares
       totalShares += shares;
-      totalValue += shares * price;
+      
+      // Only add to total value if price is non-zero
+      if (price > 0) {
+        totalValue += shares * price;
+      }
       
       // Track the date range
       if (new Date(t.transactionDate) < new Date(startDate)) {
@@ -222,7 +228,8 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
       }
     });
     
-    // Calculate weighted average price
+    // Calculate weighted average price, avoiding division by zero
+    // If all transactions have zero price, the average price will be 0
     const averagePrice = totalShares > 0 ? totalValue / totalShares : 0;
     
     // Create combined transaction
