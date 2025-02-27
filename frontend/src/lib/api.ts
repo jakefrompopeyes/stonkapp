@@ -5,8 +5,13 @@ import { supabase } from './supabase';
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
 const POLYGON_BASE_URL = 'https://api.polygon.io';
 
+// Finnhub API configuration
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'sandbox_c7jrj0qad3iefkeapmpg'; // Default to sandbox key if not provided
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+
 // Debug: Log API key status (not the actual key for security)
 console.log('Polygon API Key Status:', POLYGON_API_KEY ? 'Present (length: ' + POLYGON_API_KEY.length + ')' : 'Missing');
+console.log('Finnhub API Key Status:', FINNHUB_API_KEY ? 'Present (length: ' + FINNHUB_API_KEY.length + ')' : 'Missing');
 
 // Create Polygon API client with correct authentication
 const polygonApi = axios.create({
@@ -61,6 +66,56 @@ polygonApi.interceptors.response.use(response => {
     console.error('Authorization Error: Your API key may not have access to this endpoint');
   } else if (error.response?.status === 429) {
     console.error('Rate Limit Error: You have exceeded your API rate limit');
+  }
+  
+  return Promise.reject(error);
+});
+
+// Create Finnhub API client
+const finnhubApi = axios.create({
+  baseURL: FINNHUB_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Add the API key to every Finnhub request
+finnhubApi.interceptors.request.use(request => {
+  // Add the API key as a query parameter to every request
+  request.params = {
+    ...request.params,
+    token: FINNHUB_API_KEY
+  };
+  
+  // More detailed logging
+  console.log('Finnhub API Request:', request.method, request.url);
+  console.log('Request params:', request.params);
+  console.log('API Key Present:', !!FINNHUB_API_KEY, 'Length:', FINNHUB_API_KEY?.length || 0);
+  
+  return request;
+}, error => {
+  return Promise.reject(error);
+});
+
+// Add response interceptor to log Finnhub errors
+finnhubApi.interceptors.response.use(response => {
+  // Log successful responses
+  console.log('Finnhub API Response Status:', response.status);
+  console.log('Response data preview:', 
+    response.data && typeof response.data === 'object' 
+      ? (Array.isArray(response.data) ? `Results: ${response.data.length} items` : 'Object data') 
+      : 'No data');
+  return response;
+}, error => {
+  // Enhanced error logging
+  console.error('Finnhub API Error:');
+  console.error('- Status:', error.response?.status);
+  console.error('- Status Text:', error.response?.statusText);
+  console.error('- URL:', error.config?.url);
+  console.error('- Params:', error.config?.params);
+  
+  if (error.response?.data) {
+    console.error('- Error Details:', error.response.data);
   }
   
   return Promise.reject(error);
@@ -293,33 +348,93 @@ export const getFinancialData = async (ticker: string) => {
   }
 };
 
-// Get insider transactions (using Supabase)
+// Get insider transactions using Finnhub API
 export const getInsiderTransactions = async (ticker: string) => {
   try {
-    const { data, error } = await supabase
-      .from('insider_trading')
-      .select('*')
-      .eq('symbol', ticker)
-      .order('filingDate', { ascending: false });
+    console.log('Fetching insider transactions for:', ticker);
     
-    if (error) throw error;
+    // Try to get data from Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('insider_trading')
+        .select('*')
+        .eq('symbol', ticker)
+        .order('filingDate', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        console.log('Using insider trading data from Supabase, found:', data.length, 'records');
+        return { data: { transactions: { data: data || [] } } };
+      } else {
+        console.log('No insider trading data found in Supabase, falling back to Finnhub');
+      }
+    } catch (supabaseError) {
+      console.warn('Error fetching from Supabase, falling back to Finnhub:', supabaseError);
+    }
     
-    return { data: { transactions: { data: data || [] } } };
+    // Fall back to Finnhub API
+    const response = await finnhubApi.get('/stock/insider-transactions', {
+      params: {
+        symbol: ticker
+      }
+    });
+    
+    // Transform the Finnhub data to match our expected format
+    const transformedData = response.data.data?.map((item: any) => ({
+      id: item.id || `${item.symbol}-${item.name}-${item.transactionDate}`,
+      symbol: item.symbol,
+      filingDate: item.filingDate,
+      transactionDate: item.transactionDate,
+      reportingName: item.name,
+      relationshipTitle: item.position || 'Insider',
+      transactionType: item.change > 0 ? 'P-Purchase' : 'S-Sale',
+      sharesTraded: Math.abs(item.change),
+      price: item.transactionPrice || 0,
+      sharesOwned: item.share || 0,
+      value: Math.abs(item.change * (item.transactionPrice || 0))
+    }));
+    
+    console.log('Finnhub insider transactions found:', transformedData?.length || 0);
+    
+    return { data: { transactions: { data: transformedData || [] } } };
   } catch (error) {
     console.error(`Error fetching insider transactions for ${ticker}:`, error);
-    throw error;
+    // Return empty array in case of error
+    return { data: { transactions: { data: [] } } };
   }
 };
 
-// Get insider sentiment
+// Get insider sentiment using Finnhub API
 export const getInsiderSentiment = async (ticker: string) => {
   try {
-    // This endpoint might not be available in Polygon.io free tier
-    // Returning empty data for now
-    return { data: { sentiment: { data: [] } } };
+    console.log('Fetching insider sentiment for:', ticker);
+    
+    const response = await finnhubApi.get('/stock/insider-sentiment', {
+      params: {
+        symbol: ticker,
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
+        to: new Date().toISOString().split('T')[0] // today
+      }
+    });
+    
+    // Transform the Finnhub data to match our expected format
+    const transformedData = response.data.data?.map((item: any) => ({
+      symbol: ticker,
+      year: parseInt(item.year),
+      month: parseInt(item.month),
+      change: item.change,
+      mspr: item.mspr, // Monthly Share Purchase Ratio
+      totalInsiderTrading: item.totalInsiderTrading || 0
+    }));
+    
+    console.log('Finnhub insider sentiment periods found:', transformedData?.length || 0);
+    
+    return { data: { sentiment: { data: transformedData || [] } } };
   } catch (error) {
     console.error(`Error fetching insider sentiment for ${ticker}:`, error);
-    throw error;
+    // Return empty array in case of error
+    return { data: { sentiment: { data: [] } } };
   }
 };
 
