@@ -93,7 +93,7 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
     
     // Extract the value from the object if it's an object with a value property
     let value;
-    if (typeof valueObj === 'object' && valueObj.value !== undefined) {
+    if (typeof valueObj === 'object' && valueObj !== null && 'value' in valueObj) {
       value = valueObj.value;
     } else {
       value = valueObj;
@@ -318,8 +318,8 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     
                     if (epsValue !== undefined) {
                       // Extract the value if it's an object with a value property
-                      const value = typeof epsValue === 'object' && epsValue.value !== undefined 
-                        ? epsValue.value 
+                      const value = typeof epsValue === 'object' && epsValue !== null && 'value' in epsValue
+                        ? (epsValue as any).value
                         : epsValue;
                       
                       if (value !== undefined && value !== null) {
@@ -344,8 +344,8 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     
                     if (epsValue !== undefined) {
                       // Extract the value if it's an object with a value property
-                      const value = typeof epsValue === 'object' && epsValue.value !== undefined 
-                        ? epsValue.value 
+                      const value = typeof epsValue === 'object' && epsValue !== null && 'value' in epsValue
+                        ? (epsValue as any).value
                         : epsValue;
                       
                       if (value !== undefined && value !== null) {

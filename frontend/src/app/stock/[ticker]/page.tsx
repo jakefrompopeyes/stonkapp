@@ -239,7 +239,7 @@ export default function StockDetailPage() {
                         {news.title}
                       </h3>
                       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        <span>{news.publisher.name}</span>
+                        <span>{news.publisher?.name || 'Unknown Source'}</span>
                         <span className="mx-2">•</span>
                         <span>{formatDate(news.published_utc)}</span>
                       </div>

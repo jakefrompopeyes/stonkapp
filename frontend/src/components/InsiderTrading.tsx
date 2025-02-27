@@ -44,10 +44,19 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         // Filter out Exercise/Conversion transactions (code "M"), Payment of Exercise (code "F"),
         // Grant/Award (code "A"), and Sale to/by Issuer (code "D")
         const filteredTransactions = transactionsData.filter(
-          transaction => transaction.transactionCode !== 'M' && 
-                         transaction.transactionCode !== 'F' &&
-                         transaction.transactionCode !== 'A' &&
-                         transaction.transactionCode !== 'D'
+          transaction => {
+            // Check for required transaction codes
+            const validCode = transaction.transactionCode !== 'M' && 
+                             transaction.transactionCode !== 'F' &&
+                             transaction.transactionCode !== 'A' &&
+                             transaction.transactionCode !== 'D';
+            
+            // Ensure we have the necessary data
+            const hasRequiredData = transaction.transactionPrice !== undefined && 
+                                   transaction.change !== undefined;
+            
+            return validCode && hasRequiredData;
+          }
         );
         
         // Filter for transactions within the last 6 months
@@ -101,8 +110,13 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     const sortedTransactions = [...transactions].sort((a, b) => {
       // Sort by name
       if (a.name !== b.name) return a.name.localeCompare(b.name);
-      // Then by transaction code
-      if (a.transactionCode !== b.transactionCode) return a.transactionCode.localeCompare(b.transactionCode);
+      // Then by transaction code (safely)
+      if (a.transactionCode !== b.transactionCode) {
+        // Handle undefined values safely
+        const codeA = a.transactionCode || '';
+        const codeB = b.transactionCode || '';
+        return codeA.localeCompare(codeB);
+      }
       // Then by date (oldest first for grouping)
       return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
     });
@@ -134,12 +148,12 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         const t = group[0];
         combinedTransactions.push({
           name: t.name,
-          isDerivative: t.isDerivative,
+          isDerivative: t.isDerivative || false,
           transactionDate: t.transactionDate,
-          transactionCode: t.transactionCode,
-          totalShares: Math.abs(t.change),
-          averagePrice: t.transactionPrice,
-          totalValue: Math.abs(t.change * t.transactionPrice)
+          transactionCode: t.transactionCode || 'U', // 'U' for unknown if undefined
+          totalShares: Math.abs(t.change || 0),
+          averagePrice: t.transactionPrice || 0,
+          totalValue: Math.abs((t.change || 0) * (t.transactionPrice || 0))
         });
         return;
       }
@@ -190,21 +204,6 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
   const processCombinedGroup = (group: InsiderTransaction[], results: CombinedTransaction[]) => {
     if (group.length === 0) return;
     
-    // If only one transaction in the group, just convert it
-    if (group.length === 1) {
-      const t = group[0];
-      results.push({
-        name: t.name,
-        isDerivative: t.isDerivative,
-        transactionDate: t.transactionDate,
-        transactionCode: t.transactionCode,
-        totalShares: Math.abs(t.change),
-        averagePrice: t.transactionPrice,
-        totalValue: Math.abs(t.change * t.transactionPrice)
-      });
-      return;
-    }
-    
     // Calculate total shares and weighted average price
     let totalShares = 0;
     let totalValue = 0;
@@ -212,9 +211,9 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     let endDate = group[0].transactionDate;
     
     group.forEach(t => {
-      const shares = Math.abs(t.change);
+      const shares = Math.abs(t.change || 0);
       totalShares += shares;
-      totalValue += shares * t.transactionPrice;
+      totalValue += shares * (t.transactionPrice || 0);
       
       // Track the date range
       if (new Date(t.transactionDate) < new Date(startDate)) {
@@ -231,9 +230,9 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     // Create combined transaction
     results.push({
       name: group[0].name,
-      isDerivative: group[0].isDerivative,
+      isDerivative: group[0].isDerivative || false,
       transactionDate: endDate, // Use the most recent date as the main date
-      transactionCode: group[0].transactionCode,
+      transactionCode: group[0].transactionCode || 'U', // 'U' for unknown if undefined
       totalShares: totalShares,
       averagePrice: averagePrice,
       totalValue: totalValue,
