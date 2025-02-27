@@ -1,5 +1,7 @@
 import axios from 'axios';
+import { supabase } from './supabase';
 
+// We'll keep this for backward compatibility, but we'll primarily use Supabase
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
@@ -11,11 +13,17 @@ const api = axios.create({
 
 export const getServerStatus = async (): Promise<string> => {
   try {
-    const response = await api.get('/');
-    return response.data;
+    // Try to connect to Supabase instead of the backend API
+    const { data, error } = await supabase.from('insider_trading').select('count').limit(1);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return 'Connected to Supabase';
   } catch (error) {
-    console.error('Error fetching server status:', error);
-    throw error;
+    console.error('Error connecting to Supabase:', error);
+    return 'Error connecting to server';
   }
 };
 

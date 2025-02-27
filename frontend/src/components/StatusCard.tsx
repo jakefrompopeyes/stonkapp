@@ -11,16 +11,37 @@ const StatusCard: React.FC<StatusCardProps> = ({
   status, 
   loading = false 
 }) => {
+  // Determine the status color
+  const getStatusColor = () => {
+    if (loading) return 'bg-yellow-500';
+    if (status.includes('Error') || status.includes('error')) return 'bg-red-500';
+    return 'bg-green-500';
+  };
+
+  // Determine the status text
+  const getStatusText = () => {
+    if (loading) return 'Connecting...';
+    if (status.includes('Error') || status.includes('error')) return 'Offline';
+    return 'Online';
+  };
+
   return (
     <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md shadow-sm">
-      <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
-        {title}
-      </h3>
-      {loading ? (
-        <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-      ) : (
-        <p className="text-gray-600 dark:text-gray-300">{status}</p>
-      )}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+          {title}
+        </h3>
+        <div className="flex items-center">
+          <div className={`w-3 h-3 rounded-full mr-2 ${getStatusColor()}`}></div>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            {getStatusText()}
+          </span>
+        </div>
+      </div>
+      
+      <p className="text-gray-600 dark:text-gray-300 text-sm">
+        {loading ? 'Checking connection status...' : status}
+      </p>
     </div>
   );
 };
