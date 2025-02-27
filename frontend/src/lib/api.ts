@@ -8,17 +8,23 @@ const POLYGON_BASE_URL = 'https://api.polygon.io';
 // Debug: Log API key status (not the actual key for security)
 console.log('Polygon API Key Status:', POLYGON_API_KEY ? 'Present (length: ' + POLYGON_API_KEY.length + ')' : 'Missing');
 
-// Create Polygon API client
+// Create Polygon API client with correct authentication
 const polygonApi = axios.create({
   baseURL: POLYGON_BASE_URL,
-  params: {
-    apiKey: POLYGON_API_KEY
+  headers: {
+    'Content-Type': 'application/json',
   }
 });
 
-// Add request interceptor to log API calls for debugging
+// Add the API key to every request
 polygonApi.interceptors.request.use(request => {
-  console.log('Polygon API Request:', request.url, request.params);
+  // Add the API key as a query parameter to every request
+  request.params = {
+    ...request.params,
+    apiKey: POLYGON_API_KEY
+  };
+  
+  console.log('Polygon API Request:', request.url, 'API Key Present:', !!POLYGON_API_KEY);
   return request;
 }, error => {
   return Promise.reject(error);
@@ -93,8 +99,8 @@ export const searchStocks = async (query: string) => {
         active: true,
         sort: 'ticker',
         order: 'asc',
-        limit: 10,
-        apiKey: POLYGON_API_KEY // Explicitly include the API key
+        limit: 10
+        // API key is now added by the interceptor
       }
     });
     
@@ -236,15 +242,21 @@ export const getStockNews = async (ticker: string, limit = 5) => {
 // Get financial data
 export const getFinancialData = async (ticker: string) => {
   try {
+    // Add debugging for financial data request
+    console.log('Fetching financial data for:', ticker);
+    
     const response = await polygonApi.get(`/vX/reference/financials`, {
       params: {
         ticker,
-        limit: 1,
+        limit: 4, // Fetch the last 4 quarters instead of just 1
         sort: 'period_of_report_date',
         order: 'desc',
         timeframe: 'quarterly'
       }
     });
+    
+    // Log the number of financial periods retrieved
+    console.log('Financial periods retrieved:', response.data.results?.length || 0);
     
     return { data: { financials: response.data.results } };
   } catch (error) {
