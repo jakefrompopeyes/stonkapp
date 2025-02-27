@@ -308,37 +308,37 @@ export const getFinancialData = async (ticker: string): Promise<FinancialData[]>
  */
 export const getInsiderTransactions = async (ticker: string): Promise<InsiderTransaction[]> => {
   try {
-    // Try to get data from Supabase first
-    try {
-      const { data, error } = await supabase
-        .from('insider_trading')
-        .select('*')
-        .eq('symbol', ticker)
-        .order('filingDate', { ascending: false });
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        console.log('Using insider trading data from Supabase, found:', data.length, 'records');
-        return data.map((item: any) => ({
-          name: item.reportingName || '',
-          filingDate: item.filingDate || '',
-          transactionDate: item.transactionDate || '',
-          transactionType: item.transactionType || '',
-          sharesTraded: item.sharesTraded || 0,
-          price: item.price || 0,
-          transactionCode: item.transactionCode,
-          isDerivative: item.isDerivative,
-          change: item.change,
-          transactionPrice: item.transactionPrice
-        }));
-      }
-    } catch (supabaseError) {
-      console.warn('Error fetching from Supabase:', supabaseError);
+    const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+    
+    if (!FINNHUB_API_KEY) {
+      console.error('Finnhub API key is missing');
+      return [];
     }
     
-    // Return empty array if Supabase fails
-    return [];
+    // Use Finnhub API to get insider transactions
+    const response = await fetch(`https://finnhub.io/api/v1/stock/insider-transactions?symbol=${ticker}&token=${FINNHUB_API_KEY}`);
+    
+    if (!response.ok) {
+      console.error(`Error fetching insider transactions from Finnhub for ${ticker}:`, response.status, response.statusText);
+      return [];
+    }
+    
+    const data = await response.json();
+    console.log('Finnhub insider transactions data:', data);
+    
+    // Transform the Finnhub data to match our expected format
+    return (data.data || []).map((item: any) => ({
+      name: item.name || '',
+      filingDate: item.filingDate || '',
+      transactionDate: item.transactionDate || '',
+      transactionType: item.transactionCode || '',  // Using transactionCode as type
+      sharesTraded: item.share || 0,
+      price: item.price || 0,
+      transactionCode: item.transactionCode || '',
+      isDerivative: item.securitiesOwned !== undefined,  // Approximation
+      change: item.change || 0,
+      transactionPrice: item.price || 0
+    }));
   } catch (error) {
     console.error(`Error fetching insider transactions for ${ticker}:`, error);
     return [];
