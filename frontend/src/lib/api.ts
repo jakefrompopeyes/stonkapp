@@ -249,6 +249,7 @@ export const getStockDetails = async (ticker: string) => {
       type: item.type || '',
       weighted_shares_outstanding: item.weighted_shares_outstanding || 0,
       market: item.market || 'stocks',
+      active: item.active || true,
     };
     
     return { data: { details } };
@@ -261,8 +262,23 @@ export const getStockDetails = async (ticker: string) => {
           ticker: ticker,
           name: ticker,
           description: `Information for ${ticker} is currently unavailable`,
-          market: 'stocks',
+          homepage_url: '',
+          total_employees: 0,
+          list_date: '',
+          market_cap: 0,
+          phone_number: '',
+          address: {
+            address1: '',
+            city: '',
+            state: '',
+            postal_code: '',
+          },
+          sic_code: '',
+          sic_description: '',
+          ticker_root: ticker,
           type: 'CS',
+          weighted_shares_outstanding: 0,
+          market: 'stocks',
           active: true
         } 
       } 

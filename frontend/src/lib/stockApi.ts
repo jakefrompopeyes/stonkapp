@@ -45,6 +45,7 @@ export interface StockDetails {
   type: string;
   weighted_shares_outstanding: number;
   market: string;
+  active: boolean;
 }
 
 export interface PriceData {
@@ -158,7 +159,30 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
     return response.data.details;
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
-    throw error;
+    // Return a minimal valid StockDetails object instead of throwing
+    return {
+      ticker: ticker,
+      name: ticker,
+      description: `Information for ${ticker} is currently unavailable`,
+      homepage_url: '',
+      total_employees: 0,
+      list_date: '',
+      market_cap: 0,
+      phone_number: '',
+      address: {
+        address1: '',
+        city: '',
+        state: '',
+        postal_code: '',
+      },
+      sic_code: '',
+      sic_description: '',
+      ticker_root: ticker,
+      type: 'CS',
+      weighted_shares_outstanding: 0,
+      market: 'stocks',
+      active: true
+    };
   }
 };
 
