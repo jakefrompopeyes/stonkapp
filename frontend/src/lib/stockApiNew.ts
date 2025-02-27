@@ -327,18 +327,23 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
     console.log('Finnhub insider transactions data:', data);
     
     // Transform the Finnhub data to match our expected format
-    return (data.data || []).map((item: any) => ({
-      name: item.name || '',
-      filingDate: item.filingDate || '',
-      transactionDate: item.transactionDate || '',
-      transactionType: item.transactionCode || '',  // Using transactionCode as type
-      sharesTraded: item.share || 0,
-      price: item.price || 0,
-      transactionCode: item.transactionCode || '',
-      isDerivative: item.securitiesOwned !== undefined,  // Approximation
-      change: item.change || 0,
-      transactionPrice: item.price || 0
-    }));
+    return (data.data || []).map((item: any) => {
+      // Calculate the price - Finnhub might provide it directly or we need to calculate it
+      const price = item.price || (item.share && item.value ? item.value / item.share : 0);
+      
+      return {
+        name: item.name || '',
+        filingDate: item.filingDate || '',
+        transactionDate: item.transactionDate || '',
+        transactionType: item.transactionCode || '',  // Using transactionCode as type
+        sharesTraded: item.share || 0,
+        price: price,
+        transactionCode: item.transactionCode || '',
+        isDerivative: item.securitiesOwned !== undefined,  // Approximation
+        change: item.change || item.share || 0,  // Use share count as change if change is not provided
+        transactionPrice: price
+      };
+    });
   } catch (error) {
     console.error(`Error fetching insider transactions for ${ticker}:`, error);
     return [];

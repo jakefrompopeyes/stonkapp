@@ -205,9 +205,13 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     let endDate = group[0].transactionDate;
     
     group.forEach(t => {
-      const shares = Math.abs(t.change || 0);
+      // Use sharesTraded for the number of shares
+      const shares = Math.abs(t.sharesTraded || 0);
+      // Use price for the transaction price, defaulting to 0 if not available
+      const price = t.price || 0;
+      
       totalShares += shares;
-      totalValue += shares * (t.transactionPrice || 0);
+      totalValue += shares * price;
       
       // Track the date range
       if (new Date(t.transactionDate) < new Date(startDate)) {
