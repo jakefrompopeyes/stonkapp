@@ -7,6 +7,7 @@ import StockSearch from '@/components/StockSearch';
 import StockPriceChart from '@/components/StockPriceChart';
 import FinancialDataComponent from '@/components/FinancialData';
 import InsiderTrading from '@/components/InsiderTrading';
+import RelatedCompanies from '@/components/RelatedCompanies';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
@@ -218,6 +219,11 @@ export default function StockDetailPage() {
           {/* Insider Trading */}
           <div className="mb-6">
             <InsiderTrading ticker={ticker as string} />
+          </div>
+          
+          {/* Related Companies */}
+          <div className="mb-6">
+            <RelatedCompanies ticker={ticker as string} />
           </div>
           
           {/* News Section */}

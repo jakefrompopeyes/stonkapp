@@ -375,6 +375,106 @@ export const getInsiderSentiment = async (ticker: string): Promise<InsiderSentim
 };
 
 /**
+ * Get related companies for a stock
+ */
+export interface RelatedCompany {
+  ticker: string;
+  name?: string;
+  description?: string;
+  market?: string;
+  type?: string;
+  market_cap?: number;
+  homepage_url?: string;
+  total_employees?: number;
+  price?: number;
+  percentChange?: number;
+}
+
+export const getRelatedCompanies = async (ticker: string): Promise<RelatedCompany[]> => {
+  try {
+    const response = await fetch(`${POLYGON_BASE_URL}/v1/related-companies/${ticker}?apiKey=${POLYGON_API_KEY}`);
+    
+    if (!response.ok) {
+      console.error(`Error fetching related companies for ${ticker}:`, response.status, response.statusText);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (!data.results || !Array.isArray(data.results)) {
+      return [];
+    }
+    
+    // The API returns just tickers, so we'll fetch comprehensive details for each
+    const relatedCompanies: RelatedCompany[] = data.results.map((item: any) => ({
+      ticker: item.ticker || '',
+    }));
+    
+    // Since we have unlimited API calls, we'll fetch comprehensive details for each company
+    const companiesWithDetails = await Promise.all(
+      relatedCompanies.map(async (company) => {
+        try {
+          // Fetch detailed information for each ticker
+          const details = await getStockDetails(company.ticker);
+          
+          // Fetch the latest price data
+          const today = new Date();
+          const oneWeekAgo = new Date(today);
+          oneWeekAgo.setDate(today.getDate() - 7);
+          
+          const priceData = await getStockPrices(
+            company.ticker,
+            oneWeekAgo.toISOString().split('T')[0],
+            today.toISOString().split('T')[0]
+          );
+          
+          // Calculate current price and percent change if price data is available
+          let price = 0;
+          let percentChange = 0;
+          
+          if (priceData.length > 0) {
+            const latestPrice = priceData[priceData.length - 1];
+            price = latestPrice.c;
+            
+            if (priceData.length > 1) {
+              const previousPrice = priceData[0].c;
+              percentChange = ((latestPrice.c - previousPrice) / previousPrice) * 100;
+            }
+          }
+          
+          return {
+            ...company,
+            name: details.name,
+            description: details.description,
+            market: details.market,
+            type: details.type,
+            market_cap: details.market_cap,
+            homepage_url: details.homepage_url,
+            total_employees: details.total_employees,
+            price,
+            percentChange
+          };
+        } catch (error) {
+          console.error(`Error fetching details for related company ${company.ticker}:`, error);
+          // If details fetch fails, return just the ticker
+          return company;
+        }
+      })
+    );
+    
+    // Sort by market cap (descending) to show the most significant competitors first
+    return companiesWithDetails.sort((a, b) => {
+      if (!a.market_cap) return 1;
+      if (!b.market_cap) return -1;
+      return b.market_cap - a.market_cap;
+    });
+  } catch (error) {
+    console.error(`Error fetching related companies for ${ticker}:`, error);
+    return [];
+  }
+};
+
+/**
  * Get server status
  */
 export const getServerStatus = async (): Promise<string> => {
