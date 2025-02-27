@@ -157,7 +157,31 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
 export const getStockDetails = async (ticker: string): Promise<StockDetails> => {
   try {
     const response = await apiGetStockDetails(ticker);
-    return response.data.details;
+    // Explicitly cast and ensure all required properties are present
+    const details: StockDetails = {
+      ticker: response.data.details.ticker,
+      name: response.data.details.name,
+      description: response.data.details.description,
+      homepage_url: response.data.details.homepage_url || '',
+      total_employees: response.data.details.total_employees || 0,
+      list_date: response.data.details.list_date || '',
+      market_cap: response.data.details.market_cap || 0,
+      phone_number: response.data.details.phone_number || '',
+      address: {
+        address1: response.data.details.address?.address1 || '',
+        city: response.data.details.address?.city || '',
+        state: response.data.details.address?.state || '',
+        postal_code: response.data.details.address?.postal_code || '',
+      },
+      sic_code: response.data.details.sic_code || '',
+      sic_description: response.data.details.sic_description || '',
+      ticker_root: response.data.details.ticker_root || response.data.details.ticker,
+      type: response.data.details.type || 'CS',
+      weighted_shares_outstanding: response.data.details.weighted_shares_outstanding || 0,
+      market: response.data.details.market || 'stocks',
+      active: response.data.details.active || true
+    };
+    return details;
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
     // Return a minimal valid StockDetails object instead of throwing
