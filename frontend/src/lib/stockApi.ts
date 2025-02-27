@@ -146,7 +146,8 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
     return response.data.results;
   } catch (error) {
     console.error('Error searching stocks:', error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 };
 
@@ -201,7 +202,8 @@ export const getStockPrices = async (
     return response.data.prices;
   } catch (error) {
     console.error(`Error fetching prices for ${ticker}:`, error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 };
 
@@ -214,7 +216,8 @@ export const getStockNews = async (ticker: string, limit = 5): Promise<NewsItem[
     return response.data.news;
   } catch (error) {
     console.error(`Error fetching news for ${ticker}:`, error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 };
 
@@ -227,7 +230,8 @@ export const getFinancialData = async (ticker: string): Promise<FinancialData[]>
     return response.data.financials;
   } catch (error) {
     console.error(`Error fetching financials for ${ticker}:`, error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 };
 
@@ -252,7 +256,8 @@ export const getInsiderTransactions = async (ticker: string): Promise<InsiderTra
     return response.data.transactions.data || [];
   } catch (error) {
     console.error(`Error fetching insider transactions for ${ticker}:`, error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 };
 
@@ -265,6 +270,7 @@ export const getInsiderSentiment = async (ticker: string): Promise<InsiderSentim
     return response.data.sentiment.data || [];
   } catch (error) {
     console.error(`Error fetching insider sentiment for ${ticker}:`, error);
-    throw error;
+    // Return empty array instead of throwing
+    return [];
   }
 }; 
