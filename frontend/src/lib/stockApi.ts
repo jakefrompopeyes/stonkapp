@@ -1,4 +1,4 @@
-import api from './api';
+import api, { mockStockSearch } from './api';
 import { fetchInsiderTrading } from './supabaseUtils';
 
 export interface StockSearchResult {
@@ -133,9 +133,8 @@ export interface InsiderSentiment {
  */
 export const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
   try {
-    const response = await api.get('/api/stocks/search', {
-      params: { query }
-    });
+    // Use the mock implementation instead of the API call
+    const response = await mockStockSearch(query);
     return response.data.results;
   } catch (error) {
     console.error('Error searching stocks:', error);
