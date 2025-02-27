@@ -41,21 +41,15 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         const transactionsData = await getInsiderTransactions(ticker);
         console.log('Insider transactions data:', transactionsData);
         
-        // Filter out Exercise/Conversion transactions (code "M"), Payment of Exercise (code "F"),
-        // Grant/Award (code "A"), and Sale to/by Issuer (code "D")
+        // Filter out transactions with missing data
         const filteredTransactions = transactionsData.filter(
           transaction => {
-            // Check for required transaction codes
-            const validCode = transaction.transactionCode !== 'M' && 
-                             transaction.transactionCode !== 'F' &&
-                             transaction.transactionCode !== 'A' &&
-                             transaction.transactionCode !== 'D';
-            
             // Ensure we have the necessary data
-            const hasRequiredData = transaction.transactionPrice !== undefined && 
-                                   transaction.change !== undefined;
+            const hasRequiredData = transaction.transactionDate && 
+                                   transaction.name &&
+                                   transaction.transactionCode;
             
-            return validCode && hasRequiredData;
+            return hasRequiredData;
           }
         );
         
@@ -75,11 +69,11 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         
         // Split into buys and sells
         const buys = combined.filter(t => 
-          t.transactionCode === 'P' // Purchase only
+          t.transactionCode === 'P' || t.transactionCode === 'B' // Purchase codes
         );
         
         const sells = combined.filter(t => 
-          t.transactionCode === 'S' // Sale only (removed Sale to/by Issuer)
+          t.transactionCode === 'S' // Sale code
         );
         
         setBuyTransactions(buys);
@@ -269,6 +263,7 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
     const codes: Record<string, string> = {
       'P': 'Purchase',
       'S': 'Sale',
+      'B': 'Buy',
       'A': 'Grant/Award',
       'D': 'Sale to/by Issuer',
       'F': 'Payment of Exercise',
