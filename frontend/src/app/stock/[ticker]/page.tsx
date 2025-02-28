@@ -10,9 +10,14 @@ import InsiderTrading from '@/components/InsiderTrading';
 import RelatedCompanies from '@/components/RelatedCompanies';
 import ValuationStats from '@/components/ValuationStats';
 import ValuationMetricsVisualized from '@/components/ValuationMetricsVisualized';
+import ViewLimitPopup from '@/components/ViewLimitPopup';
+import { useAuth } from '@/lib/AuthContext';
+import { checkViewLimit } from '@/lib/viewLimits';
+import ViewCounter from '@/components/ViewCounter';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
+  const { user } = useAuth();
   const [stockDetails, setStockDetails] = useState<StockDetails | null>(null);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [latestPrice, setLatestPrice] = useState<PriceData | null>(null);
@@ -20,6 +25,7 @@ export default function StockDetailPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string>('1D');
+  const [showViewLimitPopup, setShowViewLimitPopup] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -29,6 +35,12 @@ export default function StockDetailPage() {
       setError(null);
       
       try {
+        // Check if user has reached view limit
+        const limitReached = await checkViewLimit(user?.id || null, ticker as string);
+        if (limitReached) {
+          setShowViewLimitPopup(true);
+        }
+        
         // Get current date and 7 days ago for price data
         const toDate = new Date();
         const fromDate = new Date();
@@ -73,7 +85,7 @@ export default function StockDetailPage() {
     };
     
     fetchStockData();
-  }, [ticker]);
+  }, [ticker, user]);
 
   // Format currency
   const formatCurrency = (value: number | undefined) => {
@@ -130,8 +142,9 @@ export default function StockDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto mt-8">
-      <div className="mb-6">
+      <div className="mb-6 flex justify-between items-center">
         <StockSearch />
+        <ViewCounter />
       </div>
       
       {stockDetails && (
@@ -310,6 +323,11 @@ export default function StockDetailPage() {
           )}
         </>
       )}
+      
+      <ViewLimitPopup 
+        isOpen={showViewLimitPopup} 
+        onClose={() => setShowViewLimitPopup(false)} 
+      />
     </div>
   );
 } 
