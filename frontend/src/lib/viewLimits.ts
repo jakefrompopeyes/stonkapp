@@ -35,20 +35,26 @@ export function resetAnonymousViews(): void {
 export async function getAuthenticatedViews(userId: string): Promise<string[]> {
   if (!userId) return [];
   
+  console.log(`Getting authenticated views for user ${userId}`);
+  
   // Check if we need to reset views at the end of the month
   await checkMonthlyReset(userId);
   
   const views = await getUserStockViews(userId);
+  console.log(`Retrieved ${views.length} views for user ${userId}:`, views);
   return views.map(view => view.ticker);
 }
 
 export async function trackAuthenticatedView(userId: string, ticker: string): Promise<boolean> {
   if (!userId) return false;
   
+  console.log(`Attempting to track view for user ${userId} and ticker ${ticker}`);
+  
   // Check if we need to reset views at the end of the month
   await checkMonthlyReset(userId);
   
   const result = await trackStockView(userId, ticker);
+  console.log('Track stock view result:', result);
   return result.success;
 }
 
@@ -135,29 +141,38 @@ export async function hasUnlimitedViews(userId: string | null): Promise<boolean>
 
 // Check if user has reached view limit and track the view if not
 export async function checkViewLimit(userId: string | null, ticker: string): Promise<boolean> {
+  console.log(`checkViewLimit called for ${userId ? 'user ' + userId : 'anonymous user'} and ticker ${ticker}`);
+  
   // For authenticated users
   if (userId) {
     // Check if user has premium subscription with unlimited views
     const hasUnlimited = await hasUnlimitedViews(userId);
+    console.log(`User ${userId} has unlimited views: ${hasUnlimited}`);
+    
     if (hasUnlimited) {
       // Premium users can view unlimited stocks without tracking
       return false;
     }
     
     const views = await getAuthenticatedViews(userId);
+    console.log(`User ${userId} has viewed these stocks:`, views);
     
     // If user has already viewed this stock, don't count it against their limit
     if (views.includes(ticker)) {
+      console.log(`User ${userId} has already viewed ${ticker}, not counting against limit`);
       return false;
     }
     
     // If user has reached their limit
     if (views.length >= AUTHENTICATED_VIEW_LIMIT) {
+      console.log(`User ${userId} has reached view limit (${views.length}/${AUTHENTICATED_VIEW_LIMIT})`);
       return true;
     }
     
     // Track the view
-    await trackAuthenticatedView(userId, ticker);
+    console.log(`Tracking view for user ${userId} and ticker ${ticker}`);
+    const tracked = await trackAuthenticatedView(userId, ticker);
+    console.log(`View tracked successfully: ${tracked}`);
     return false;
   } 
   // For anonymous users
