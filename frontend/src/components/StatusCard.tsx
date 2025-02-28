@@ -26,20 +26,20 @@ const StatusCard: React.FC<StatusCardProps> = ({
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md shadow-sm">
+    <div className="bg-white p-4 rounded-md shadow-sm">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+        <h3 className="text-lg font-semibold text-gray-700">
           {title}
         </h3>
         <div className="flex items-center">
           <div className={`w-3 h-3 rounded-full mr-2 ${getStatusColor()}`}></div>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <span className="text-sm font-medium text-gray-600">
             {getStatusText()}
           </span>
         </div>
       </div>
       
-      <p className="text-gray-600 dark:text-gray-300 text-sm">
+      <p className="text-gray-600 text-sm">
         {loading ? 'Checking connection status...' : status}
       </p>
     </div>

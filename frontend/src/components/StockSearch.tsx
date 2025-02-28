@@ -85,8 +85,8 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for stocks (e.g., AAPL, MSFT, TSLA)"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md 
-                    bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 
+          className="w-full px-4 py-2 border border-gray-300 rounded-md 
+                    bg-white text-gray-800 
                     focus:outline-none focus:ring-2 focus:ring-blue-500"
           onFocus={() => query.trim().length >= 2 && setShowResults(true)}
         />
@@ -98,13 +98,13 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
       </div>
 
       {showResults && results.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 
-                      dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 
+                      rounded-md shadow-lg max-h-60 overflow-y-auto">
           <ul>
             {results.map((stock) => (
               <li 
                 key={stock.ticker} 
-                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => handleSelectStock(stock)}
               >
                 <div className="flex justify-between items-center">
@@ -123,11 +123,11 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
                       </div>
                     )}
                     <div>
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{stock.ticker}</span>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{stock.name}</p>
+                      <span className="font-medium text-gray-800">{stock.ticker}</span>
+                      <p className="text-sm text-gray-600">{stock.name}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">{stock.market}</span>
+                  <span className="text-xs text-gray-500">{stock.market}</span>
                 </div>
               </li>
             ))}
@@ -136,9 +136,9 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
       )}
 
       {showResults && query.trim().length >= 2 && results.length === 0 && !loading && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 
-                      dark:border-gray-700 rounded-md shadow-lg p-4 text-center">
-          <p className="text-gray-600 dark:text-gray-400">No results found for "{query}"</p>
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 
+                      rounded-md shadow-lg p-4 text-center">
+          <p className="text-gray-600">No results found for "{query}"</p>
         </div>
       )}
     </div>
