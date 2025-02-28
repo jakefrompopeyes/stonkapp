@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { getStripe } from '@/lib/stripe';
-import CheckoutForm from '@/components/CheckoutForm';
 import { useAuth } from '@/lib/AuthContext';
+import CheckoutForm from '@/components/CheckoutForm';
 
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
