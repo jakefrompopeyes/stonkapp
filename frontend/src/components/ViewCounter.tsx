@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getRemainingViews, getTotalViewLimit, hasUnlimitedViews } from '@/lib/viewLimits';
+import { getRemainingViews, getTotalViewLimit, hasUnlimitedViews, getAuthenticatedViews } from '@/lib/viewLimits';
+import { supabase } from '@/lib/supabase';
 
 export default function ViewCounter() {
   const { user } = useAuth();
@@ -11,6 +12,40 @@ export default function ViewCounter() {
   const [loading, setLoading] = useState(true);
   const [nextReset, setNextReset] = useState<string>('');
   const [isUnlimited, setIsUnlimited] = useState<boolean>(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
+  // Add a direct test function to check view counts
+  const checkViewsDirectly = async () => {
+    if (!user) {
+      setDebugInfo('No user logged in');
+      return;
+    }
+    
+    try {
+      setDebugInfo('Checking views directly...');
+      
+      // Get views directly from Supabase
+      const { data, error } = await supabase
+        .from('user_stock_views')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Direct view check error:', error);
+        setDebugInfo(prev => `${prev}\nError: ${error.message}`);
+      } else {
+        console.log('Direct view check successful:', data);
+        setDebugInfo(prev => `${prev}\nFound ${data.length} views directly from Supabase:\n${data.map(v => v.ticker).join(', ')}`);
+        
+        // Also check using the helper function
+        const views = await getAuthenticatedViews(user.id);
+        setDebugInfo(prev => `${prev}\n\nUsing helper function: ${views.length} views:\n${views.join(', ')}`);
+      }
+    } catch (e) {
+      console.error('Test exception:', e);
+      setDebugInfo(prev => `${prev}\nException: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
 
   useEffect(() => {
     const fetchViewData = async () => {
@@ -107,6 +142,23 @@ export default function ViewCounter() {
         <div className="text-xs text-gray-500 mt-1 text-right">
           Resets on {nextReset}
         </div>
+        
+        {/* Debug button */}
+        {user && (
+          <div className="mt-2">
+            <button 
+              onClick={checkViewsDirectly}
+              className="text-xs text-blue-500 hover:underline"
+            >
+              Debug Views
+            </button>
+            {debugInfo && (
+              <pre className="mt-1 p-1 bg-gray-100 rounded text-xs overflow-auto max-h-32 text-left">
+                {debugInfo}
+              </pre>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

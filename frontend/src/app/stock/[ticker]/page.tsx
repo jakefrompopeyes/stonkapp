@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { checkViewLimit } from '@/lib/viewLimits';
 import ViewCounter from '@/components/ViewCounter';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
@@ -28,6 +29,55 @@ export default function StockDetailPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('1D');
   const [showViewLimitPopup, setShowViewLimitPopup] = useState<boolean>(false);
   const [limitReached, setLimitReached] = useState<boolean>(false);
+  const [testResult, setTestResult] = useState<string>('');
+
+  // Add a direct test function to verify Supabase permissions
+  const testSupabaseInsert = async () => {
+    if (!user) {
+      setTestResult('No user logged in');
+      return;
+    }
+    
+    try {
+      console.log('Testing direct Supabase insert...');
+      const now = new Date().toISOString();
+      const testTicker = 'TEST' + Math.floor(Math.random() * 1000);
+      
+      const { data, error } = await supabase
+        .from('user_stock_views')
+        .insert({
+          user_id: user.id,
+          ticker: testTicker,
+          viewed_at: now,
+          last_reset_at: now
+        });
+      
+      if (error) {
+        console.error('Test insert error:', error);
+        setTestResult(`Error: ${error.message}`);
+      } else {
+        console.log('Test insert successful:', data);
+        setTestResult(`Success! Inserted test ticker: ${testTicker}`);
+        
+        // Now try to read it back
+        const { data: readData, error: readError } = await supabase
+          .from('user_stock_views')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (readError) {
+          console.error('Test read error:', readError);
+          setTestResult(prev => `${prev}\nRead Error: ${readError.message}`);
+        } else {
+          console.log('Test read successful:', readData);
+          setTestResult(prev => `${prev}\nRead Success! Found ${readData.length} records`);
+        }
+      }
+    } catch (e) {
+      console.error('Test exception:', e);
+      setTestResult(`Exception: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -155,6 +205,23 @@ export default function StockDetailPage() {
         <StockSearch />
         <ViewCounter />
       </div>
+      
+      {/* Add test button for debugging */}
+      {user && (
+        <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+          <button 
+            onClick={testSupabaseInsert}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Test Supabase Insert
+          </button>
+          {testResult && (
+            <pre className="mt-2 p-2 bg-gray-200 rounded text-xs overflow-auto">
+              {testResult}
+            </pre>
+          )}
+        </div>
+      )}
       
       {limitReached ? (
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
