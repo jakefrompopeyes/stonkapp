@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { getRemainingViews, getTotalViewLimit, hasUnlimitedViews, getAuthenticatedViews } from '@/lib/viewLimits';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 export default function ViewCounter() {
   const { user } = useAuth();
@@ -138,9 +139,19 @@ export default function ViewCounter() {
           ></div>
         </div>
         
-        {/* Reset date */}
-        <div className="text-xs text-gray-500 mt-1 text-right">
-          Resets on {nextReset}
+        <div className="flex justify-between items-center mt-1">
+          {/* Reset date */}
+          <div className="text-xs text-gray-500">
+            Resets on {nextReset}
+          </div>
+          
+          {/* Upgrade button */}
+          <Link 
+            href="/pricing" 
+            className="text-xs text-blue-600 font-medium hover:text-blue-800"
+          >
+            Upgrade →
+          </Link>
         </div>
         
         {/* Debug button */}

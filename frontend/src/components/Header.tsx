@@ -32,6 +32,14 @@ export default function Header() {
               Stocks
             </Link>
             
+            {/* Upgrade button - desktop */}
+            <Link 
+              href="/pricing" 
+              className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-md font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+            >
+              Upgrade to Premium
+            </Link>
+            
             {isLoading ? (
               <div className="animate-pulse h-8 w-20 bg-gray-700 rounded"></div>
             ) : user ? (
@@ -54,6 +62,13 @@ export default function Header() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Profile
+                    </Link>
+                    <Link 
+                      href="/pricing" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Upgrade Plan
                     </Link>
                     <button 
                       onClick={() => {
@@ -117,6 +132,15 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Stocks
+            </Link>
+            
+            {/* Upgrade button - mobile */}
+            <Link 
+              href="/pricing" 
+              className="block py-2 mt-2 mb-2 text-center bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-md font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Upgrade to Premium
             </Link>
             
             {user ? (
