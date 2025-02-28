@@ -35,7 +35,7 @@ export default function Header() {
             {/* Upgrade button - desktop */}
             <Link 
               href="/pricing" 
-              className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-md font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-md font-medium hover:from-blue-600 hover:to-blue-800 transition-all"
             >
               Upgrade to Premium
             </Link>
@@ -137,7 +137,7 @@ export default function Header() {
             {/* Upgrade button - mobile */}
             <Link 
               href="/pricing" 
-              className="block py-2 mt-2 mb-2 text-center bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-md font-medium hover:from-yellow-500 hover:to-yellow-700 transition-all"
+              className="block py-2 mt-2 mb-2 text-center bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-md font-medium hover:from-blue-600 hover:to-blue-800 transition-all"
               onClick={() => setIsMenuOpen(false)}
             >
               Upgrade to Premium
