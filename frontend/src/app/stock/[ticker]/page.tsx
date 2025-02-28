@@ -8,14 +8,18 @@ import StockPriceChart from '@/components/StockPriceChart';
 import FinancialDataComponent from '@/components/FinancialData';
 import InsiderTrading from '@/components/InsiderTrading';
 import RelatedCompanies from '@/components/RelatedCompanies';
+import ValuationStats from '@/components/ValuationStats';
+import ValuationMetricsVisualized from '@/components/ValuationMetricsVisualized';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
   const [stockDetails, setStockDetails] = useState<StockDetails | null>(null);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [latestPrice, setLatestPrice] = useState<PriceData | null>(null);
+  const [priceChange, setPriceChange] = useState<{ amount: number; percentage: number } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('1D');
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -46,6 +50,19 @@ export default function StockDetailPage() {
         // Set the latest price (last item in the array)
         if (prices && prices.length > 0) {
           setLatestPrice(prices[prices.length - 1]);
+          
+          // Calculate price change if we have at least 2 data points
+          if (prices.length >= 2) {
+            const firstPrice = prices[0].c;
+            const lastPrice = prices[prices.length - 1].c;
+            const changeAmount = lastPrice - firstPrice;
+            const changePercentage = (changeAmount / firstPrice) * 100;
+            
+            setPriceChange({
+              amount: changeAmount,
+              percentage: changePercentage
+            });
+          }
         }
       } catch (err) {
         console.error('Error fetching stock data:', err);
@@ -121,13 +138,28 @@ export default function StockDetailPage() {
         <>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <div className="flex justify-between items-start mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                  {stockDetails.ticker}
-                </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-300">
-                  {stockDetails.name}
-                </p>
+              <div className="flex items-center">
+                {stockDetails.branding?.logo_url && (
+                  <div className="mr-4 w-12 h-12 relative flex-shrink-0">
+                    <img
+                      src={`${stockDetails.branding.logo_url}?apiKey=${process.env.NEXT_PUBLIC_POLYGON_API_KEY || 'Ql8hVHlw80YaHIBMer0QgagV1L11MMUL'}`}
+                      alt={`${stockDetails.ticker} logo`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        // Hide the image if it fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                    {stockDetails.ticker}
+                  </h1>
+                  <p className="text-xl text-gray-600 dark:text-gray-300">
+                    {stockDetails.name}
+                  </p>
+                </div>
               </div>
               
               {latestPrice && (
@@ -135,9 +167,13 @@ export default function StockDetailPage() {
                   <div className="text-2xl font-bold text-gray-800 dark:text-white">
                     {formatCurrency(latestPrice.c)}
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Last close price
-                  </div>
+                  {priceChange && (
+                    <div className={`text-sm ${priceChange.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {priceChange.amount >= 0 ? '+' : ''}{priceChange.amount.toFixed(2)} 
+                      ({priceChange.amount >= 0 ? '+' : ''}{priceChange.percentage.toFixed(2)}%)
+                      <span className="text-xs text-gray-500 ml-1">{selectedPeriod}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -145,7 +181,11 @@ export default function StockDetailPage() {
           
           {/* Price Chart */}
           <div className="mb-6">
-            <StockPriceChart ticker={ticker as string} />
+            <StockPriceChart 
+              ticker={ticker as string} 
+              onPeriodChange={(period) => setSelectedPeriod(period)}
+              onPriceChange={(change) => setPriceChange(change)}
+            />
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
@@ -216,14 +256,24 @@ export default function StockDetailPage() {
             <FinancialDataComponent ticker={ticker as string} />
           </div>
           
-          {/* Insider Trading */}
+          {/* Valuation Stats */}
           <div className="mb-6">
-            <InsiderTrading ticker={ticker as string} />
+            <ValuationStats ticker={ticker as string} />
+          </div>
+          
+          {/* Valuation Metrics Visualized */}
+          <div className="mb-6">
+            <ValuationMetricsVisualized ticker={ticker as string} />
           </div>
           
           {/* Related Companies */}
           <div className="mb-6">
             <RelatedCompanies ticker={ticker as string} />
+          </div>
+          
+          {/* Insider Trading */}
+          <div className="mb-6">
+            <InsiderTrading ticker={ticker as string} />
           </div>
           
           {/* News Section */}

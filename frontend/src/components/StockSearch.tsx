@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchStocks, StockSearchResult } from '@/lib/stockApi';
+import Image from 'next/image';
 
 interface StockSearchProps {
   onSelectStock?: (stock: StockSearchResult) => void;
@@ -69,6 +70,13 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
     }
   };
 
+  // Function to get the logo URL with API key
+  const getLogoUrl = (url?: string) => {
+    if (!url) return undefined;
+    const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY || 'Ql8hVHlw80YaHIBMer0QgagV1L11MMUL';
+    return `${url}?apiKey=${apiKey}`;
+  };
+
   return (
     <div className="relative w-full max-w-md" ref={searchRef}>
       <div className="relative">
@@ -100,9 +108,24 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelectStock }) => {
                 onClick={() => handleSelectStock(stock)}
               >
                 <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">{stock.ticker}</span>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{stock.name}</p>
+                  <div className="flex items-center">
+                    {(stock.icon_url || stock.logo_url) && (
+                      <div className="mr-3 flex-shrink-0 w-8 h-8 relative">
+                        <img
+                          src={getLogoUrl(stock.icon_url || stock.logo_url)}
+                          alt={`${stock.ticker} logo`}
+                          className="w-full h-full object-contain rounded-full"
+                          onError={(e) => {
+                            // Hide the image if it fails to load
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium text-gray-800 dark:text-gray-200">{stock.ticker}</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{stock.name}</p>
+                    </div>
                   </div>
                   <span className="text-xs text-gray-500 dark:text-gray-500">{stock.market}</span>
                 </div>

@@ -8,6 +8,8 @@ export interface StockSearchResult {
   market: string;
   type: string;
   active: boolean;
+  logo_url?: string; // Add logo URL
+  icon_url?: string; // Add icon URL
 }
 
 export interface StockDetails {
@@ -28,6 +30,10 @@ export interface StockDetails {
     postal_code?: string;
   };
   homepage_url?: string;
+  branding?: {
+    logo_url?: string;
+    icon_url?: string;
+  };
   [key: string]: any; // Allow for additional properties
 }
 
@@ -113,9 +119,22 @@ export interface InsiderSentiment {
   change: number;
 }
 
+// New interface for valuation metrics
+export interface ValuationMetrics {
+  ticker: string;
+  peAnnual?: number;
+  peTTM?: number;
+  psAnnual?: number;
+  psTTM?: number;
+  // Add other metrics as needed
+  [key: string]: any;
+}
+
 // Direct API implementations with proper error handling
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY || 'Ql8hVHlw80YaHIBMer0QgagV1L11MMUL';
 const POLYGON_BASE_URL = 'https://api.polygon.io';
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || 'cuufs59r01qlidi3qulgcuufs59r01qlidi3qum0';
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 
 /**
  * Search for stocks by ticker or name
@@ -137,7 +156,9 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
       name: item.name || '',
       market: item.market || 'stocks',
       type: item.type || 'CS',
-      active: item.active || true
+      active: item.active || true,
+      logo_url: item.branding?.logo_url || '',
+      icon_url: item.branding?.icon_url || ''
     }));
   } catch (error) {
     console.error('Error searching stocks:', error);
@@ -173,7 +194,11 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       total_employees: item.total_employees,
       list_date: item.list_date,
       address: item.address,
-      homepage_url: item.homepage_url
+      homepage_url: item.homepage_url,
+      branding: item.branding ? {
+        logo_url: item.branding.logo_url,
+        icon_url: item.branding.icon_url
+      } : undefined
     };
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
@@ -190,7 +215,8 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       total_employees: undefined,
       list_date: undefined,
       address: undefined,
-      homepage_url: undefined
+      homepage_url: undefined,
+      branding: undefined
     };
   }
 };
@@ -308,13 +334,6 @@ export const getFinancialData = async (ticker: string): Promise<FinancialData[]>
  */
 export const getInsiderTransactions = async (ticker: string): Promise<InsiderTransaction[]> => {
   try {
-    const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
-    
-    if (!FINNHUB_API_KEY) {
-      console.error('Finnhub API key is missing');
-      return [];
-    }
-    
     // Use Finnhub API to get insider transactions
     const response = await fetch(`https://finnhub.io/api/v1/stock/insider-transactions?symbol=${ticker}&token=${FINNHUB_API_KEY}`);
     
@@ -490,5 +509,37 @@ export const getServerStatus = async (): Promise<string> => {
   } catch (error) {
     console.error('Error connecting to Supabase:', error);
     return 'Error connecting to server';
+  }
+};
+
+/**
+ * Get valuation metrics for a stock (PE ratio, PS ratio, etc.)
+ */
+export const getValuationMetrics = async (ticker: string): Promise<ValuationMetrics> => {
+  try {
+    const response = await fetch(`${FINNHUB_BASE_URL}/stock/metric?symbol=${ticker}&metric=all&token=${FINNHUB_API_KEY}`);
+    
+    if (!response.ok) {
+      console.error(`Error fetching valuation metrics for ${ticker}:`, response.status, response.statusText);
+      throw new Error(`Failed to fetch valuation metrics for ${ticker}`);
+    }
+    
+    const data = await response.json();
+    
+    // Extract the metrics we need
+    return {
+      ticker: ticker,
+      peAnnual: data.metric?.peAnnual,
+      peTTM: data.metric?.peTTM,
+      psAnnual: data.metric?.psAnnual,
+      psTTM: data.metric?.psTTM,
+      // Add other metrics as needed
+    };
+  } catch (error) {
+    console.error(`Error fetching valuation metrics for ${ticker}:`, error);
+    // Return a minimal valid ValuationMetrics object
+    return {
+      ticker: ticker
+    };
   }
 }; 

@@ -10,7 +10,8 @@ export const {
   getFinancialData,
   getInsiderTransactions,
   getInsiderSentiment,
-  getServerStatus
+  getServerStatus,
+  getValuationMetrics
 } = stockApiNew;
 
 // Re-export all types
@@ -21,5 +22,6 @@ export type {
   NewsItem,
   FinancialData,
   InsiderTransaction,
-  InsiderSentiment
+  InsiderSentiment,
+  ValuationMetrics
 } from './stockApiNew'; 

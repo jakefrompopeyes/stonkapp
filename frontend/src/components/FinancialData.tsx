@@ -308,7 +308,36 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     </td>
                   ))}
                 </tr>
-                <tr>
+                <tr className="bg-gray-50 dark:bg-gray-900">
+                  <td className="px-4 py-0 pb-2 text-xs italic font-normal text-gray-500 dark:text-gray-500 pl-8">
+                    Net Profit Margin
+                  </td>
+                  {financials.map((item, index) => {
+                    const revenue = item.financials?.income_statement?.revenues;
+                    const netIncome = item.financials?.income_statement?.net_income_loss;
+                    let netMargin = 'N/A';
+                    
+                    if (revenue && netIncome) {
+                      // Extract values if they're objects with a value property
+                      const revenueValue = typeof revenue === 'object' && revenue !== null && 'value' in revenue
+                        ? (revenue as any).value : revenue;
+                      const netIncomeValue = typeof netIncome === 'object' && netIncome !== null && 'value' in netIncome
+                        ? (netIncome as any).value : netIncome;
+                      
+                      if (revenueValue && revenueValue !== 0) {
+                        const marginValue = (netIncomeValue / revenueValue) * 100;
+                        netMargin = `${marginValue.toFixed(2)}%`;
+                      }
+                    }
+                    
+                    return (
+                      <td key={index} className="px-4 py-0 pb-2 text-xs text-gray-500 dark:text-gray-500">
+                        {netMargin}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="bg-gray-50 dark:bg-gray-900">
                   <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                     EPS (Basic)
                   </td>

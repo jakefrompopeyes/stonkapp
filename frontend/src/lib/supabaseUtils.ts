@@ -90,6 +90,23 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
+// Function for authentication - sign in with Google
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`
+    }
+  });
+  
+  if (error) {
+    console.error('Error signing in with Google:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
 // Example function for authentication - sign out
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
@@ -106,6 +123,18 @@ export async function signOut() {
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
+}
+
+// Function to get the current session
+export async function getSession() {
+  const { data, error } = await supabase.auth.getSession();
+  
+  if (error) {
+    console.error('Error getting session:', error);
+    throw error;
+  }
+  
+  return data.session;
 }
 
 // Example function to store insider trading data
