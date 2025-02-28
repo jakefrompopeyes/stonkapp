@@ -26,6 +26,7 @@ export default function StockDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string>('1D');
   const [showViewLimitPopup, setShowViewLimitPopup] = useState<boolean>(false);
+  const [limitReached, setLimitReached] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -36,9 +37,13 @@ export default function StockDetailPage() {
       
       try {
         // Check if user has reached view limit
-        const limitReached = await checkViewLimit(user?.id || null, ticker as string);
-        if (limitReached) {
+        const viewLimitReached = await checkViewLimit(user?.id || null, ticker as string);
+        setLimitReached(viewLimitReached);
+        
+        if (viewLimitReached) {
           setShowViewLimitPopup(true);
+          setLoading(false);
+          return; // Don't load stock data if limit reached
         }
         
         // Get current date and 7 days ago for price data

@@ -80,7 +80,8 @@ export default function ViewCounter() {
     );
   }
 
-  // Calculate percentage for the progress bar
+  // Calculate percentage for the progress bar and used views
+  const usedViews = totalViews - remainingViews;
   const percentage = Math.max(0, Math.min(100, (remainingViews / totalViews) * 100));
 
   return (
@@ -89,7 +90,7 @@ export default function ViewCounter() {
         <div className="flex justify-between items-center mb-2">
           <span className="font-medium text-gray-700">Stock Views</span>
           <span className="text-sm text-gray-500 ml-4">
-            {remainingViews} / {totalViews} remaining
+            {usedViews} / {totalViews} used
           </span>
         </div>
         
