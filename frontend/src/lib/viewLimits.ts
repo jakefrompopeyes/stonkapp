@@ -62,6 +62,8 @@ export async function trackAuthenticatedView(userId: string, ticker: string): Pr
 async function checkMonthlyReset(userId: string): Promise<void> {
   if (!userId) return;
   
+  console.log(`Checking monthly reset for user ${userId}`);
+  
   try {
     // Get the user's last reset date
     const { data, error } = await supabase
@@ -76,6 +78,8 @@ async function checkMonthlyReset(userId: string): Promise<void> {
       return;
     }
     
+    console.log(`Last reset data:`, data);
+    
     const now = new Date();
     let shouldReset = false;
     
@@ -87,11 +91,18 @@ async function checkMonthlyReset(userId: string): Promise<void> {
       shouldReset = 
         lastResetDate.getMonth() !== now.getMonth() || 
         lastResetDate.getFullYear() !== now.getFullYear();
+      
+      console.log(`Last reset date: ${lastResetDate.toISOString()}, Current date: ${now.toISOString()}, Should reset: ${shouldReset}`);
+    } else {
+      console.log(`No reset date found for user ${userId}`);
     }
     
     // If no reset date found or it's from a previous month, reset the views
     if (shouldReset || !data || data.length === 0) {
+      console.log(`Resetting views for user ${userId}`);
       await resetAuthenticatedViews(userId);
+    } else {
+      console.log(`No need to reset views for user ${userId}`);
     }
   } catch (error) {
     console.error('Error in monthly reset check:', error);
@@ -102,6 +113,8 @@ async function checkMonthlyReset(userId: string): Promise<void> {
 async function resetAuthenticatedViews(userId: string): Promise<void> {
   if (!userId) return;
   
+  console.log(`Resetting authenticated views for user ${userId}`);
+  
   try {
     // Delete all the user's view records
     const { error: deleteError } = await supabase
@@ -111,9 +124,9 @@ async function resetAuthenticatedViews(userId: string): Promise<void> {
     
     if (deleteError) {
       console.error('Error resetting user views:', deleteError);
+    } else {
+      console.log(`Successfully reset views for user ${userId}`);
     }
-    
-    console.log(`Reset views for user ${userId} at the end of the month`);
   } catch (error) {
     console.error('Error resetting authenticated views:', error);
   }

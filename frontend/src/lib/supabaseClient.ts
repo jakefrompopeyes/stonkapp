@@ -34,27 +34,52 @@ export async function trackStockView(userId: string, ticker: string) {
   const now = new Date().toISOString();
   
   try {
+    // First check if the view already exists
+    const { data: existingView, error: checkError } = await supabase
+      .from('user_stock_views')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('ticker', ticker)
+      .single();
+      
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is expected
+      console.error('Error checking existing view:', checkError);
+    }
+    
+    // If view exists, just update the timestamp
+    if (existingView) {
+      console.log(`View already exists for ${userId} and ${ticker}, updating timestamp`);
+      const { data, error } = await supabase
+        .from('user_stock_views')
+        .update({ viewed_at: now })
+        .eq('id', existingView.id);
+        
+      if (error) {
+        console.error('Error updating existing view:', error);
+        return { success: false, error: error.message };
+      }
+      
+      console.log('Successfully updated view timestamp');
+      return { success: true, data };
+    }
+    
+    // Otherwise insert a new record
+    console.log(`Inserting new view for ${userId} and ${ticker}`);
     const { data, error } = await supabase
       .from('user_stock_views')
-      .upsert(
-        { 
-          user_id: userId, 
-          ticker: ticker,
-          viewed_at: now,
-          last_reset_at: now // This will be updated only for new records
-        },
-        { 
-          onConflict: 'user_id,ticker',
-          ignoreDuplicates: false // Update the viewed_at timestamp if the record already exists
-        }
-      );
+      .insert({ 
+        user_id: userId, 
+        ticker: ticker,
+        viewed_at: now,
+        last_reset_at: now
+      });
       
     if (error) {
-      console.error('Error tracking stock view:', error);
+      console.error('Error inserting new view:', error);
       return { success: false, error: error.message };
     }
     
-    console.log('Successfully tracked stock view:', data);
+    console.log('Successfully inserted new view:', data);
     return { success: true, data };
   } catch (e) {
     console.error('Exception tracking stock view:', e);
