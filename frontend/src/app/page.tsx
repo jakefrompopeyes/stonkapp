@@ -1,3 +1,4 @@
+// Updated for Vercel deployment - forcing a new commit
 'use client'
 
 import { useState, useEffect } from 'react'
