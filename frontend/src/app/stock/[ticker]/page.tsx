@@ -266,14 +266,14 @@ export default function StockDetailPage() {
             <ValuationMetricsVisualized ticker={ticker as string} />
           </div>
           
-          {/* Related Companies */}
-          <div className="mb-6">
-            <RelatedCompanies ticker={ticker as string} />
-          </div>
-          
           {/* Insider Trading */}
           <div className="mb-6">
             <InsiderTrading ticker={ticker as string} />
+          </div>
+          
+          {/* Related Companies */}
+          <div className="mb-6">
+            <RelatedCompanies ticker={ticker as string} />
           </div>
           
           {/* News Section */}
