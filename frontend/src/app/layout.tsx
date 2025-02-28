@@ -4,9 +4,6 @@ import './globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 import Header from '@/components/Header'
 import AuthDebug from '@/components/AuthDebug'
-import ViewCounter from '@/components/ViewCounter'
-import Link from 'next/link'
-import ThemeToggle from '@/components/ThemeToggle'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -34,28 +31,12 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className={`${inter.className} bg-gray-50 dark:bg-gray-900 min-h-screen`}>
+      <body className={inter.className}>
         <AuthProvider>
-          <header className="bg-white dark:bg-gray-800 shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center">
-                  <Link href="/" className="flex items-center">
-                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">StonkApp</span>
-                  </Link>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <ViewCounter />
-                  <ThemeToggle />
-                </div>
-              </div>
-            </div>
-          </header>
-          
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Header />
+          <main className="container mx-auto p-4">
             {children}
           </main>
-          
           <AuthDebug />
         </AuthProvider>
       </body>
