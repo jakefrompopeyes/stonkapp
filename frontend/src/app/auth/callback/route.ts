@@ -8,6 +8,13 @@ export async function GET(request: NextRequest) {
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
 
+  console.log('Auth callback received:', { 
+    hasCode: !!code, 
+    error, 
+    error_description,
+    url: request.url
+  });
+
   // Handle OAuth errors
   if (error) {
     console.error('OAuth error:', error, error_description);
@@ -18,6 +25,7 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     try {
+      console.log('Exchanging code for session...');
       const cookieStore = cookies();
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,7 +46,7 @@ export async function GET(request: NextRequest) {
       );
       
       // Exchange the code for a session
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       
       if (error) {
         console.error('Error exchanging code for session:', error);
@@ -47,6 +55,7 @@ export async function GET(request: NextRequest) {
         );
       }
       
+      console.log('Session exchange successful, redirecting to profile page');
       // Redirect to profile page on successful authentication
       return NextResponse.redirect(new URL('/profile', requestUrl.origin));
     } catch (err) {
@@ -58,5 +67,6 @@ export async function GET(request: NextRequest) {
   }
 
   // If no code is present, redirect to sign-in page
+  console.log('No code present, redirecting to sign-in page');
   return NextResponse.redirect(new URL('/auth/signin', requestUrl.origin));
 } 

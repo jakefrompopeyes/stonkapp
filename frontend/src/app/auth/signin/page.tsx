@@ -45,12 +45,16 @@ function SignInContent() {
     // Add a timeout to detect if the process is hanging
     const timeoutId = setTimeout(() => {
       console.warn('Google sign-in process is taking longer than expected (10 seconds)');
-      setError('The sign-in process seems to be taking longer than expected. If you see the Google consent screen, please click "Continue" to proceed.');
-      setIsLoading(false); // Set loading to false so user can try again if needed
+      // Don't set an error message here, as the redirect might still be in progress
+      // Just log the warning for debugging purposes
     }, 10000);
 
     try {
       console.log('Starting Google sign-in from button click');
+      
+      // Show a message to the user that they'll be redirected
+      setError('You will be redirected to Google for authentication...');
+      
       const result = await signInWithGoogle();
       console.log('Sign-in with Google result:', result);
       
@@ -59,13 +63,27 @@ function SignInContent() {
       
       // If we get here without a redirect, it means the OAuth flow started successfully
       // but we're waiting for the redirect. Show a helpful message.
-      setError(null);
-      setIsLoading(false);
+      setError('Redirecting to Google...');
+      
+      // The page should redirect automatically, but if we're still here after 5 seconds,
+      // provide a manual redirect option
+      setTimeout(() => {
+        if (result?.url) {
+          setError('Redirect not happening automatically. <a href="' + result.url + '" class="underline">Click here to continue</a>');
+        }
+      }, 5000);
       
     } catch (error: any) {
       clearTimeout(timeoutId); // Clear the timeout if there's an error
       console.error('Google sign-in error:', error);
-      setError(error.message || 'Failed to sign in with Google. Please try again.');
+      
+      // Provide a more helpful error message based on the error
+      if (error.message?.includes('timed out')) {
+        setError('The sign-in process timed out. Please try again or use email sign-in instead.');
+      } else {
+        setError(error.message || 'Failed to sign in with Google. Please try again.');
+      }
+      
       setIsLoading(false);
     }
   };

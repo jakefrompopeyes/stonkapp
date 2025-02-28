@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { getRemainingViews, getTotalViewLimit, hasUnlimitedViews, getAuthenticatedViews } from '@/lib/viewLimits';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { AUTHENTICATED_VIEW_LIMIT, ANONYMOUS_VIEW_LIMIT } from '@/lib/viewLimits';
 
 export default function ViewCounter() {
   const { user } = useAuth();
@@ -13,6 +14,9 @@ export default function ViewCounter() {
   const [loading, setLoading] = useState(true);
   const [nextReset, setNextReset] = useState<string>('');
   const [isUnlimited, setIsUnlimited] = useState<boolean>(false);
+  const [resetDate, setResetDate] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchViewData = async () => {
@@ -51,6 +55,43 @@ export default function ViewCounter() {
     return () => clearInterval(intervalId);
   }, [user]);
 
+  useEffect(() => {
+    async function fetchRemainingViews() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Add a timeout to prevent UI blocking
+        const timeoutPromise = new Promise<number>((resolve) => {
+          // Default to showing max views if we time out
+          setTimeout(() => resolve(user ? AUTHENTICATED_VIEW_LIMIT : ANONYMOUS_VIEW_LIMIT), 3000);
+        });
+        
+        // Race the actual view count fetch against the timeout
+        const views = await Promise.race([
+          getRemainingViews(user?.id || null),
+          timeoutPromise
+        ]);
+        
+        setRemainingViews(views);
+        
+        // Calculate reset date (first day of next month)
+        const today = new Date();
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        setResetDate(nextMonth.toLocaleDateString());
+      } catch (err) {
+        console.error('Error fetching remaining views:', err);
+        setError('Could not load view count');
+        // Default to showing max views if there's an error
+        setRemainingViews(user ? AUTHENTICATED_VIEW_LIMIT : ANONYMOUS_VIEW_LIMIT);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchRemainingViews();
+  }, [user]);
+
   if (loading || remainingViews === null) {
     return null; // Don't show anything while loading
   }
@@ -86,6 +127,27 @@ export default function ViewCounter() {
   const usedViews = totalViews - remainingViews;
   // The percentage should be based on used views, not remaining views
   const percentage = Math.max(0, Math.min(100, (usedViews / totalViews) * 100));
+
+  // If still loading, show a loading indicator
+  if (isLoading) {
+    return (
+      <div className="text-sm text-gray-500 flex items-center space-x-1">
+        <span>Loading view limit...</span>
+      </div>
+    );
+  }
+
+  // If there was an error, show a simplified view
+  if (error) {
+    return (
+      <div className="text-sm text-gray-500 flex items-center space-x-1">
+        <span>Free stock views available</span>
+        <Link href="/pricing" className="text-xs text-blue-500 hover:underline ml-2">
+          Upgrade →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg p-3 shadow-sm">

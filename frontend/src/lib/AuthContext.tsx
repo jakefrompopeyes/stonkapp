@@ -86,13 +86,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const startTime = new Date().getTime();
       console.log('Starting OAuth process at:', new Date().toISOString());
       
-      // Simplify the OAuth configuration - remove the queryParams that might be causing issues
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl
-        },
+      // Create a promise that will reject after 15 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Google sign-in timed out after 15 seconds'));
+        }, 15000);
       });
+      
+      // Race the OAuth process against the timeout
+      const { data, error } = await Promise.race([
+        supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: false // Ensure browser redirect happens
+          },
+        }),
+        timeoutPromise
+      ]) as any;
       
       // Log the time it took to get a response
       const endTime = new Date().getTime();
