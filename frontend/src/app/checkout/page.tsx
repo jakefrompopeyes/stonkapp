@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { getStripe } from '@/lib/stripe';
 import { useAuth } from '@/lib/AuthContext';
 import CheckoutForm from '@/components/CheckoutForm';
 
-export default function CheckoutPage() {
+// Create a client component that uses useSearchParams
+function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -102,5 +103,26 @@ export default function CheckoutPage() {
         </Elements>
       )}
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function CheckoutLoading() {
+  return (
+    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
+      <div className="flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+      <p className="text-center mt-4 text-gray-600">Loading checkout...</p>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutContent />
+    </Suspense>
   );
 } 
