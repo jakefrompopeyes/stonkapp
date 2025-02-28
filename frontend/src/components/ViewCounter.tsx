@@ -68,6 +68,11 @@ export default function ViewCounter() {
             style={{ width: `${percentage}%` }}
           ></div>
         </div>
+        
+        {/* Reset date */}
+        <div className="text-xs text-gray-500 mt-1 text-right">
+          Resets on {nextReset}
+        </div>
       </div>
     </div>
   );
