@@ -12,6 +12,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<{ provider: Provider; url: string } | undefined>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,6 +111,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     user,
     session,
@@ -118,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signInWithGoogle,
     signOut,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

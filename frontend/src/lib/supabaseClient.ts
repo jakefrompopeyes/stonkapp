@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 // Function to get the number of stock views for a user
 export async function getUserStockViews(userId: string) {
   if (!userId) return [];
@@ -42,4 +44,22 @@ export async function trackStockView(userId: string, ticker: string) {
   }
   
   return { success: true, data };
+}
+
+// Function to get user profile data including subscription status
+export async function getUserProfile(userId: string) {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+    
+  if (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
+  }
+  
+  return data;
 } 

@@ -1,4 +1,4 @@
-import { getUserStockViews, trackStockView } from './supabaseClient';
+import { getUserStockViews, trackStockView, getUserProfile } from './supabaseClient';
 import { supabase } from './supabase';
 
 // Constants for view limits
@@ -113,10 +113,37 @@ async function resetAuthenticatedViews(userId: string): Promise<void> {
   }
 }
 
+// Check if user has premium subscription
+export async function hasUnlimitedViews(userId: string | null): Promise<boolean> {
+  if (!userId) return false;
+  
+  try {
+    const profile = await getUserProfile(userId);
+    
+    if (!profile) return false;
+    
+    // Check if user has an active premium subscription
+    return (
+      profile.subscription_status === 'active' && 
+      (profile.subscription_tier === 'premium' || profile.subscription_tier === 'pro')
+    );
+  } catch (error) {
+    console.error('Error checking premium status:', error);
+    return false;
+  }
+}
+
 // Check if user has reached view limit and track the view if not
 export async function checkViewLimit(userId: string | null, ticker: string): Promise<boolean> {
   // For authenticated users
   if (userId) {
+    // Check if user has premium subscription with unlimited views
+    const hasUnlimited = await hasUnlimitedViews(userId);
+    if (hasUnlimited) {
+      // Premium users can view unlimited stocks without tracking
+      return false;
+    }
+    
     const views = await getAuthenticatedViews(userId);
     
     // If user has already viewed this stock, don't count it against their limit
@@ -157,6 +184,13 @@ export async function checkViewLimit(userId: string | null, ticker: string): Pro
 // Get remaining views for a user
 export async function getRemainingViews(userId: string | null): Promise<number> {
   if (userId) {
+    // Check if user has premium subscription with unlimited views
+    const hasUnlimited = await hasUnlimitedViews(userId);
+    if (hasUnlimited) {
+      // Return a high number to indicate unlimited views
+      return 999;
+    }
+    
     const views = await getAuthenticatedViews(userId);
     return Math.max(0, AUTHENTICATED_VIEW_LIMIT - views.length);
   } else {

@@ -70,10 +70,23 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
               <p className="mb-4 text-gray-700">
                 You've used all {AUTHENTICATED_VIEW_LIMIT} of your free stock profile views as a signed-in user.
               </p>
-              <p className="text-gray-700">
-                Your view limit will reset on {nextReset}. We're also working on premium plans 
-                that will allow unlimited stock profile views. Stay tuned for updates!
+              <p className="text-gray-700 mb-4">
+                Your view limit will reset on {nextReset}, or you can upgrade to a premium plan for unlimited views.
               </p>
+              <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                <Link 
+                  href="/pricing"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-center transition-colors"
+                >
+                  View Premium Plans
+                </Link>
+                <button 
+                  onClick={onClose}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-center transition-colors"
+                >
+                  Wait for Reset
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -81,7 +94,7 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
                 You've used all {ANONYMOUS_VIEW_LIMIT} of your free anonymous stock profile views.
               </p>
               <p className="mb-4 text-gray-700">
-                Sign up or sign in to get {AUTHENTICATED_VIEW_LIMIT} additional free views!
+                Sign up or sign in to get {AUTHENTICATED_VIEW_LIMIT} additional free views, or upgrade to a premium plan for unlimited access!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
                 <Link 
@@ -91,10 +104,10 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
                   Sign In
                 </Link>
                 <Link 
-                  href="/auth/signin"
+                  href="/pricing"
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-center transition-colors"
                 >
-                  Sign Up
+                  View Premium Plans
                 </Link>
               </div>
             </>
@@ -110,8 +123,8 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
           </p>
           <p className="mt-2">
             {user 
-              ? `Views reset on ${nextReset}. Premium plans coming soon!`
-              : `Sign in to get ${TOTAL_FREE_VIEWS} total free views.`
+              ? `Views reset on ${nextReset}. Premium plans available now!`
+              : `Sign in to get ${TOTAL_FREE_VIEWS} total free views or upgrade for unlimited access.`
             }
           </p>
         </div>
