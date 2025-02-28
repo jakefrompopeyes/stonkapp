@@ -72,7 +72,7 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
     const isPositive = percentChange > 0;
     
     return (
-      <span className={isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+      <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
         {isPositive ? '+' : ''}{formattedValue}%
       </span>
     );
@@ -80,8 +80,8 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Similar Companies
         </h2>
         <div className="flex justify-center items-center py-8">
@@ -93,11 +93,11 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Similar Companies
         </h2>
-        <div className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded-md">
+        <div className="bg-red-100 text-red-700 p-4 rounded-md">
           {error}
         </div>
       </div>
@@ -106,11 +106,11 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
 
   if (companies.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Similar Companies
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600">
           No similar companies data available for this stock.
         </p>
       </div>
@@ -118,8 +118,8 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">
         Similar Companies & Competitors
       </h2>
       
@@ -127,38 +127,38 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
         {companies.map((company, index) => (
           <div 
             key={index} 
-            className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
           >
             <Link 
               href={`/stock/${company.ticker}`} 
               className="block"
             >
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium text-gray-900 dark:text-white text-base truncate" title={company.name || company.ticker}>
+                <h3 className="font-medium text-gray-900 text-base truncate" title={company.name || company.ticker}>
                   {company.name || company.ticker}
                 </h3>
-                <span className="text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">
+                <span className="text-sm font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded">
                   {company.ticker}
                 </span>
               </div>
               
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Market Cap:</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-xs text-gray-500">Market Cap:</span>
+                  <span className="text-xs font-medium text-gray-700">
                     {formatMarketCap(company.market_cap)}
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Price:</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-xs text-gray-500">Price:</span>
+                  <span className="text-xs font-medium text-gray-700">
                     {formatCurrency(company.price)}
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">7-Day Change:</span>
+                  <span className="text-xs text-gray-500">7-Day Change:</span>
                   <span className="text-xs font-medium">
                     {formatPercentChange(company.percentChange)}
                   </span>
@@ -169,7 +169,7 @@ export default function RelatedCompanies({ ticker }: RelatedCompaniesProps) {
         ))}
       </div>
       
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-sm text-gray-500">
         <p>
           Data shows companies related to {ticker} based on industry classification, market behavior, and news correlation.
         </p>

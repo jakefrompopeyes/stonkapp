@@ -165,7 +165,7 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-center items-center h-32">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
@@ -175,7 +175,7 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-center">
           <p className="text-red-500">{error}</p>
         </div>
@@ -185,27 +185,27 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
 
   if (financials.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400">No financial data available</p>
+          <p className="text-gray-500">No financial data available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">
         Financial Data
       </h2>
       
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+      <div className="flex border-b border-gray-200 mb-4">
         <button
           className={`py-2 px-4 text-sm font-medium ${
             activeTab === 'income'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              ? 'text-blue-600 border-b-2 border-blue-500'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
           onClick={() => setActiveTab('income')}
         >
@@ -214,8 +214,8 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
         <button
           className={`py-2 px-4 text-sm font-medium ${
             activeTab === 'balance'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              ? 'text-blue-600 border-b-2 border-blue-500'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
           onClick={() => setActiveTab('balance')}
         >
@@ -224,8 +224,8 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
         <button
           className={`py-2 px-4 text-sm font-medium ${
             activeTab === 'cash'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              ? 'text-blue-600 border-b-2 border-blue-500'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
           onClick={() => setActiveTab('cash')}
         >
@@ -235,26 +235,26 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
       
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Metric
               </th>
               {financials.map((item, index) => {
                 return (
-                  <th key={index} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th key={index} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {item.fiscal_period} {item.fiscal_year}
                   </th>
                 );
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-gray-200">
             {activeTab === 'income' && (
               <>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Revenue
                   </td>
                   {financials.map((item, index) => {
@@ -262,54 +262,54 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     console.log(`Revenue for ${item.fiscal_period} ${item.fiscal_year}:`, 
                       item.financials?.income_statement?.revenues);
                     return (
-                      <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td key={index} className="px-4 py-3 text-sm text-gray-600">
                         {formatLargeNumber(item.financials?.income_statement?.revenues)}
                       </td>
                     );
                   })}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Cost of Revenue
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.income_statement?.cost_of_revenue)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Gross Profit
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.income_statement?.gross_profit)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Operating Income
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.income_statement?.operating_income_loss)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Net Income
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.income_statement?.net_income_loss)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-0 pb-2 text-xs italic font-normal text-gray-500 dark:text-gray-500 pl-8">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-0 pb-2 text-xs italic font-normal text-gray-500 pl-8">
                     Net Profit Margin
                   </td>
                   {financials.map((item, index) => {
@@ -331,14 +331,14 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     }
                     
                     return (
-                      <td key={index} className="px-4 py-0 pb-2 text-xs text-gray-500 dark:text-gray-500">
+                      <td key={index} className="px-4 py-0 pb-2 text-xs text-gray-500">
                         {netMargin}
                       </td>
                     );
                   })}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     EPS (Basic)
                   </td>
                   {financials.map((item, index) => {
@@ -357,14 +357,14 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     }
                     
                     return (
-                      <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td key={index} className="px-4 py-3 text-sm text-gray-600">
                         {displayValue}
                       </td>
                     );
                   })}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     EPS (Diluted)
                   </td>
                   {financials.map((item, index) => {
@@ -383,7 +383,7 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
                     }
                     
                     return (
-                      <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td key={index} className="px-4 py-3 text-sm text-gray-600">
                         {displayValue}
                       </td>
                     );
@@ -394,52 +394,52 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
             
             {activeTab === 'balance' && (
               <>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Total Assets
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.balance_sheet?.assets)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Total Liabilities
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.balance_sheet?.liabilities)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Total Equity
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.balance_sheet?.equity)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Current Assets
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.balance_sheet?.current_assets)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Current Liabilities
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.balance_sheet?.current_liabilities)}
                     </td>
                   ))}
@@ -449,32 +449,32 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
             
             {activeTab === 'cash' && (
               <>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Operating Cash Flow
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.cash_flow_statement?.net_cash_flow_from_operating_activities)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Investing Cash Flow
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.cash_flow_statement?.net_cash_flow_from_investing_activities)}
                     </td>
                   ))}
                 </tr>
-                <tr className="bg-gray-50 dark:bg-gray-900">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <tr className="bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-700">
                     Financing Cash Flow
                   </td>
                   {financials.map((item, index) => (
-                    <td key={index} className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td key={index} className="px-4 py-3 text-sm text-gray-600">
                       {formatLargeNumber(item.financials?.cash_flow_statement?.net_cash_flow_from_financing_activities)}
                     </td>
                   ))}
@@ -485,7 +485,7 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
         </table>
       </div>
       
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-xs text-gray-500">
         Source: Polygon.io | Last {financials.length} quarters
       </div>
     </div>

@@ -339,14 +339,14 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
   const getColorClass = (value: number, transactionCode: string) => {
     // For purchases (P) and grants (A), use green
     if (transactionCode === 'P' || transactionCode === 'A') {
-      return 'text-green-600 dark:text-green-400';
+      return 'text-green-600';
     }
     // For sales (S) and other dispositions, use red
     if (transactionCode === 'S' || transactionCode === 'D') {
-      return 'text-red-600 dark:text-red-400';
+      return 'text-red-600';
     }
     // For other transactions, use default color
-    return 'text-gray-600 dark:text-gray-400';
+    return 'text-gray-600';
   };
 
   // Calculate total value for a transaction set
@@ -361,8 +361,8 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Insider Trading
         </h2>
         <div className="flex justify-center items-center py-8">
@@ -374,11 +374,11 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Insider Trading
         </h2>
-        <div className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded-md">
+        <div className="bg-red-100 text-red-700 p-4 rounded-md">
           {error}
         </div>
       </div>
@@ -387,11 +387,11 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
 
   if (buyTransactions.length === 0 && sellTransactions.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
           Insider Trading
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600">
           No insider trading data available for this stock in the last 6 months.
         </p>
       </div>
@@ -405,59 +405,59 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
   const totalSellShares = calculateTotalShares(sellTransactions);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">
         Insider Trading (Last 6 Months)
       </h2>
       
       {/* Summary section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-          <h3 className="text-lg font-medium text-green-700 dark:text-green-400 mb-2">
+        <div className="bg-green-50 rounded-lg p-4">
+          <h3 className="text-lg font-medium text-green-700 mb-2">
             Insider Purchases
           </h3>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Value</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+              <p className="text-sm text-gray-500">Total Value</p>
+              <p className="text-lg font-semibold text-green-600">
                 {formatCurrency(totalBuyValue)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Shares</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+              <p className="text-sm text-gray-500">Total Shares</p>
+              <p className="text-lg font-semibold text-green-600">
                 {formatNumber(totalBuyShares)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Transactions</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+              <p className="text-sm text-gray-500">Transactions</p>
+              <p className="text-lg font-semibold text-green-600">
                 {buyTransactions.length}
               </p>
             </div>
           </div>
         </div>
         
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-          <h3 className="text-lg font-medium text-red-700 dark:text-red-400 mb-2">
+        <div className="bg-red-50 rounded-lg p-4">
+          <h3 className="text-lg font-medium text-red-700 mb-2">
             Insider Sells
           </h3>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Value</p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+              <p className="text-sm text-gray-500">Total Value</p>
+              <p className="text-lg font-semibold text-red-600">
                 {formatCurrency(totalSellValue)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Shares</p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+              <p className="text-sm text-gray-500">Total Shares</p>
+              <p className="text-lg font-semibold text-red-600">
                 {formatNumber(totalSellShares)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Transactions</p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+              <p className="text-sm text-gray-500">Transactions</p>
+              <p className="text-lg font-semibold text-red-600">
                 {sellTransactions.length}
               </p>
             </div>
@@ -466,14 +466,14 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
       </div>
       
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
+      <div className="border-b border-gray-200 mb-4">
         <nav className="flex -mb-px">
           <button
             onClick={() => setActiveTab('buys')}
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'buys'
-                ? 'border-b-2 border-green-500 text-green-600 dark:text-green-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'border-b-2 border-green-500 text-green-600'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Buys ({buyTransactions.length})
@@ -482,8 +482,8 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
             onClick={() => setActiveTab('sells')}
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'sells'
-                ? 'border-b-2 border-red-500 text-red-600 dark:text-red-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'border-b-2 border-red-500 text-red-600'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Sells ({sellTransactions.length})
@@ -496,58 +496,58 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         {activeTab === 'buys' && (
           <>
             {buyTransactions.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400 py-4">
+              <p className="text-gray-600 py-4">
                 No insider purchases in the last 6 months.
               </p>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Insider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Position
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Transaction
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Shares
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Avg. Price
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Value
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {buyTransactions.map((transaction, index) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         {transaction.name || 'Unknown'}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {determineRole(transaction.name, transaction.isDerivative)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(transaction.transactionDate, transaction.startDate)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {formatTransactionCode(transaction.transactionCode)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600 dark:text-green-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600">
                         {formatNumber(transaction.totalShares)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500">
                         {formatCurrency(transaction.averagePrice)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600 dark:text-green-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600">
                         {formatCurrency(transaction.totalValue)}
                       </td>
                     </tr>
@@ -561,58 +561,58 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         {activeTab === 'sells' && (
           <>
             {sellTransactions.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400 py-4">
+              <p className="text-gray-600 py-4">
                 No insider sales in the last 6 months.
               </p>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Insider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Position
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Transaction
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Shares
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Avg. Price
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Value
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {sellTransactions.map((transaction, index) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         {transaction.name || 'Unknown'}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {determineRole(transaction.name, transaction.isDerivative)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(transaction.transactionDate, transaction.startDate)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {formatTransactionCode(transaction.transactionCode)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-red-600 dark:text-red-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-red-600">
                         {formatNumber(transaction.totalShares)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-500">
                         {formatCurrency(transaction.averagePrice)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-red-600 dark:text-red-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-red-600">
                         {formatCurrency(transaction.totalValue)}
                       </td>
                     </tr>
@@ -624,7 +624,7 @@ export default function InsiderTrading({ ticker }: InsiderTradingProps) {
         )}
       </div>
       
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-sm text-gray-500">
         <p>
           Data shows combined insider transactions within the last 6 months, excluding grants, awards, and issuer sales. Transactions by the same insider within 3 days are combined with weighted average prices.
         </p>
