@@ -158,72 +158,155 @@ export async function checkViewLimit(userId: string | null, ticker: string): Pro
   
   // For authenticated users
   if (userId) {
-    // Check if user has premium subscription with unlimited views
-    const hasUnlimited = await hasUnlimitedViews(userId);
-    console.log(`User ${userId} has unlimited views: ${hasUnlimited}`);
-    
-    if (hasUnlimited) {
-      // Premium users can view unlimited stocks without tracking
+    try {
+      // Check if user has premium subscription with unlimited views
+      const hasUnlimited = await hasUnlimitedViews(userId);
+      console.log(`User ${userId} has unlimited views: ${hasUnlimited}`);
+      
+      if (hasUnlimited) {
+        // Premium users can view unlimited stocks without tracking
+        return false;
+      }
+      
+      // Get current views
+      const views = await getAuthenticatedViews(userId);
+      console.log(`User ${userId} has viewed these stocks:`, views);
+      
+      // If user has already viewed this stock, don't count it against their limit
+      if (views.includes(ticker)) {
+        console.log(`User ${userId} has already viewed ${ticker}, not counting against limit`);
+        return false;
+      }
+      
+      // If user has reached their limit
+      if (views.length >= AUTHENTICATED_VIEW_LIMIT) {
+        console.log(`User ${userId} has reached view limit (${views.length}/${AUTHENTICATED_VIEW_LIMIT})`);
+        return true;
+      }
+      
+      // Track the view - use direct Supabase insert for reliability
+      console.log(`Tracking view for user ${userId} and ticker ${ticker}`);
+      
+      // Try direct insert first
+      try {
+        const now = new Date().toISOString();
+        const { error } = await supabase
+          .from('user_stock_views')
+          .insert({
+            user_id: userId,
+            ticker: ticker,
+            viewed_at: now,
+            last_reset_at: now
+          });
+        
+        if (error) {
+          console.error('Direct insert error:', error);
+          // Fall back to the helper function
+          const tracked = await trackAuthenticatedView(userId, ticker);
+          console.log(`View tracked using helper function: ${tracked}`);
+        } else {
+          console.log(`View tracked successfully using direct insert`);
+        }
+      } catch (e) {
+        console.error('Exception during direct insert:', e);
+        // Fall back to the helper function
+        const tracked = await trackAuthenticatedView(userId, ticker);
+        console.log(`View tracked using helper function after exception: ${tracked}`);
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error in checkViewLimit for authenticated user:', error);
+      // If there's an error, don't block the user from viewing
       return false;
     }
-    
-    const views = await getAuthenticatedViews(userId);
-    console.log(`User ${userId} has viewed these stocks:`, views);
-    
-    // If user has already viewed this stock, don't count it against their limit
-    if (views.includes(ticker)) {
-      console.log(`User ${userId} has already viewed ${ticker}, not counting against limit`);
-      return false;
-    }
-    
-    // If user has reached their limit
-    if (views.length >= AUTHENTICATED_VIEW_LIMIT) {
-      console.log(`User ${userId} has reached view limit (${views.length}/${AUTHENTICATED_VIEW_LIMIT})`);
-      return true;
-    }
-    
-    // Track the view
-    console.log(`Tracking view for user ${userId} and ticker ${ticker}`);
-    const tracked = await trackAuthenticatedView(userId, ticker);
-    console.log(`View tracked successfully: ${tracked}`);
-    return false;
   } 
   // For anonymous users
   else {
-    const views = getAnonymousViews();
-    
-    // If user has already viewed this stock, don't count it against their limit
-    if (views[ticker]) {
+    try {
+      const views = getAnonymousViews();
+      
+      // If user has already viewed this stock, don't count it against their limit
+      if (views[ticker]) {
+        return false;
+      }
+      
+      // If user has reached their limit
+      const viewCount = Object.keys(views).length;
+      if (viewCount >= ANONYMOUS_VIEW_LIMIT) {
+        return true;
+      }
+      
+      // Track the view
+      trackAnonymousView(ticker);
+      return false;
+    } catch (error) {
+      console.error('Error in checkViewLimit for anonymous user:', error);
+      // If there's an error, don't block the user from viewing
       return false;
     }
-    
-    // If user has reached their limit
-    const viewCount = Object.keys(views).length;
-    if (viewCount >= ANONYMOUS_VIEW_LIMIT) {
-      return true;
-    }
-    
-    // Track the view
-    trackAnonymousView(ticker);
-    return false;
   }
 }
 
 // Get remaining views for a user
 export async function getRemainingViews(userId: string | null): Promise<number> {
+  console.log(`getRemainingViews called for ${userId ? 'user ' + userId : 'anonymous user'}`);
+  
   if (userId) {
-    // Check if user has premium subscription with unlimited views
-    const hasUnlimited = await hasUnlimitedViews(userId);
-    if (hasUnlimited) {
-      // Return a high number to indicate unlimited views
-      return 999;
+    try {
+      // Check if user has premium subscription with unlimited views
+      const hasUnlimited = await hasUnlimitedViews(userId);
+      if (hasUnlimited) {
+        console.log(`User ${userId} has unlimited views, returning 999`);
+        // Return a high number to indicate unlimited views
+        return 999;
+      }
+      
+      // Try to get views using the helper function
+      let views: string[] = [];
+      try {
+        views = await getAuthenticatedViews(userId);
+        console.log(`Got ${views.length} views using helper function`);
+      } catch (e) {
+        console.error('Error getting views with helper function:', e);
+        
+        // Fall back to direct query
+        try {
+          const { data, error } = await supabase
+            .from('user_stock_views')
+            .select('ticker')
+            .eq('user_id', userId);
+            
+          if (error) {
+            console.error('Error with direct query:', error);
+          } else {
+            views = data.map(view => view.ticker);
+            console.log(`Got ${views.length} views using direct query`);
+          }
+        } catch (directError) {
+          console.error('Error with direct query:', directError);
+        }
+      }
+      
+      const remaining = Math.max(0, AUTHENTICATED_VIEW_LIMIT - views.length);
+      console.log(`User ${userId} has ${remaining} remaining views out of ${AUTHENTICATED_VIEW_LIMIT}`);
+      return remaining;
+    } catch (error) {
+      console.error('Error in getRemainingViews for authenticated user:', error);
+      // If there's an error, assume user has all views available
+      return AUTHENTICATED_VIEW_LIMIT;
     }
-    
-    const views = await getAuthenticatedViews(userId);
-    return Math.max(0, AUTHENTICATED_VIEW_LIMIT - views.length);
   } else {
-    const views = getAnonymousViews();
-    return Math.max(0, ANONYMOUS_VIEW_LIMIT - Object.keys(views).length);
+    try {
+      const views = getAnonymousViews();
+      const remaining = Math.max(0, ANONYMOUS_VIEW_LIMIT - Object.keys(views).length);
+      console.log(`Anonymous user has ${remaining} remaining views out of ${ANONYMOUS_VIEW_LIMIT}`);
+      return remaining;
+    } catch (error) {
+      console.error('Error in getRemainingViews for anonymous user:', error);
+      // If there's an error, assume user has all views available
+      return ANONYMOUS_VIEW_LIMIT;
+    }
   }
 }
 
