@@ -14,6 +14,7 @@ import ViewLimitPopup from '@/components/ViewLimitPopup';
 import { useAuth } from '@/lib/AuthContext';
 import { checkViewLimit } from '@/lib/viewLimits';
 import ViewCounter from '@/components/ViewCounter';
+import Link from 'next/link';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
@@ -37,10 +38,13 @@ export default function StockDetailPage() {
       
       try {
         // Check if user has reached view limit
+        console.log(`Checking view limit for ticker: ${ticker}, user: ${user?.id || 'anonymous'}`);
         const viewLimitReached = await checkViewLimit(user?.id || null, ticker as string);
+        console.log(`View limit reached: ${viewLimitReached}`);
         setLimitReached(viewLimitReached);
         
         if (viewLimitReached) {
+          console.log('View limit reached, showing popup and stopping data fetch');
           setShowViewLimitPopup(true);
           setLoading(false);
           return; // Don't load stock data if limit reached
@@ -152,7 +156,37 @@ export default function StockDetailPage() {
         <ViewCounter />
       </div>
       
-      {stockDetails && (
+      {limitReached ? (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="text-center py-8">
+            <svg className="mx-auto h-16 w-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <h2 className="mt-4 text-xl font-bold text-gray-800">View Limit Reached</h2>
+            <p className="mt-2 text-gray-600">
+              {user ? 
+                `You've used all your free stock views for this month.` : 
+                `You've used all your anonymous stock views.`}
+            </p>
+            <div className="mt-6 flex justify-center space-x-4">
+              {user ? (
+                <Link href="/pricing" className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
+                  View Premium Plans
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/signin" className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
+                    Sign In
+                  </Link>
+                  <Link href="/pricing" className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md">
+                    View Premium Plans
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : stockDetails && (
         <>
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex justify-between items-start mb-6">

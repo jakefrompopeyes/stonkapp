@@ -8,7 +8,9 @@ import {
   getTotalViewLimit, 
   ANONYMOUS_VIEW_LIMIT, 
   AUTHENTICATED_VIEW_LIMIT,
-  TOTAL_FREE_VIEWS
+  TOTAL_FREE_VIEWS,
+  getAnonymousViews,
+  getAuthenticatedViews
 } from '@/lib/viewLimits';
 
 interface ViewLimitPopupProps {
@@ -21,24 +23,43 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
   const [remainingViews, setRemainingViews] = useState<number>(0);
   const [totalLimit, setTotalLimit] = useState<number>(0);
   const [nextReset, setNextReset] = useState<string>('');
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
       const fetchViewLimits = async () => {
-        const remaining = await getRemainingViews(user?.id || null);
-        const total = getTotalViewLimit(!!user);
-        
-        setRemainingViews(remaining);
-        setTotalLimit(total);
-        
-        // Calculate next reset date (first day of next month)
-        const today = new Date();
-        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        const formatter = new Intl.DateTimeFormat('en-US', { 
-          month: 'long', 
-          day: 'numeric' 
-        });
-        setNextReset(formatter.format(nextMonth));
+        try {
+          // Get view information
+          const remaining = await getRemainingViews(user?.id || null);
+          const total = getTotalViewLimit(!!user);
+          
+          setRemainingViews(remaining);
+          setTotalLimit(total);
+          
+          // Calculate next reset date (first day of next month)
+          const today = new Date();
+          const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+          const formatter = new Intl.DateTimeFormat('en-US', { 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          setNextReset(formatter.format(nextMonth));
+          
+          // Debug information
+          let debug = '';
+          if (user) {
+            const views = await getAuthenticatedViews(user.id);
+            debug = `Authenticated user: ${user.id}\nViewed stocks: ${views.join(', ')}\nRemaining: ${remaining}/${total}`;
+          } else {
+            const views = getAnonymousViews();
+            debug = `Anonymous user\nViewed stocks: ${Object.keys(views).join(', ')}\nRemaining: ${remaining}/${total}`;
+          }
+          setDebugInfo(debug);
+          console.log('View limit debug:', debug);
+        } catch (error) {
+          console.error('Error fetching view limits:', error);
+          setDebugInfo(`Error: ${error}`);
+        }
       };
       
       fetchViewLimits();
@@ -127,6 +148,11 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
               : `Sign in to get ${TOTAL_FREE_VIEWS} total free views or upgrade for unlimited access.`
             }
           </p>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-2 bg-gray-100 rounded text-xs font-mono whitespace-pre-wrap">
+              {debugInfo}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -82,7 +82,8 @@ export default function ViewCounter() {
 
   // Calculate percentage for the progress bar and used views
   const usedViews = totalViews - remainingViews;
-  const percentage = Math.max(0, Math.min(100, (remainingViews / totalViews) * 100));
+  // The percentage should be based on used views, not remaining views
+  const percentage = Math.max(0, Math.min(100, (usedViews / totalViews) * 100));
 
   return (
     <div className="bg-white rounded-lg p-3 shadow-sm">
