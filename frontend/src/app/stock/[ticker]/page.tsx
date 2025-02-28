@@ -121,7 +121,7 @@ export default function StockDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
@@ -131,10 +131,10 @@ export default function StockDetailPage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
-          <p className="text-gray-600 dark:text-gray-300">{error}</p>
+          <p className="text-gray-600">{error}</p>
         </div>
       </div>
     );
@@ -149,7 +149,7 @@ export default function StockDetailPage() {
       
       {stockDetails && (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center">
                 {stockDetails.branding?.logo_url && (
@@ -166,10 +166,10 @@ export default function StockDetailPage() {
                   </div>
                 )}
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                  <h1 className="text-3xl font-bold text-gray-800">
                     {stockDetails.ticker}
                   </h1>
-                  <p className="text-xl text-gray-600 dark:text-gray-300">
+                  <p className="text-xl text-gray-600">
                     {stockDetails.name}
                   </p>
                 </div>
@@ -177,7 +177,7 @@ export default function StockDetailPage() {
               
               {latestPrice && (
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-800 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-800">
                     {formatCurrency(latestPrice.c)}
                   </div>
                   {priceChange && (
@@ -193,7 +193,7 @@ export default function StockDetailPage() {
           </div>
           
           {/* Price Chart */}
-          <div className="mb-6">
+          <div className="mb-6 bg-white rounded-lg shadow-md p-6">
             <StockPriceChart 
               ticker={ticker as string} 
               onPeriodChange={(period) => setSelectedPeriod(period)}
@@ -201,35 +201,35 @@ export default function StockDetailPage() {
             />
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">
                   Company Information
                 </h2>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Market Cap: </span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-gray-600">Market Cap: </span>
+                    <span className="font-medium text-gray-800">
                       {formatLargeNumber(stockDetails.market_cap)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Employees: </span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-gray-600">Employees: </span>
+                    <span className="font-medium text-gray-800">
                       {formatLargeNumber(stockDetails.total_employees)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Listed: </span>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-gray-600">Listed: </span>
+                    <span className="font-medium text-gray-800">
                       {formatDate(stockDetails.list_date)}
                     </span>
                   </div>
                   {stockDetails.address && (
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Headquarters: </span>
-                      <span className="font-medium text-gray-800 dark:text-gray-200">
+                      <span className="text-gray-600">Headquarters: </span>
+                      <span className="font-medium text-gray-800">
                         {stockDetails.address.address1 && `${stockDetails.address.address1}, `}
                         {stockDetails.address.city && `${stockDetails.address.city}, `}
                         {stockDetails.address.state && `${stockDetails.address.state} `}
@@ -239,7 +239,7 @@ export default function StockDetailPage() {
                   )}
                   {stockDetails.homepage_url && (
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Website: </span>
+                      <span className="text-gray-600">Website: </span>
                       <a 
                         href={stockDetails.homepage_url} 
                         target="_blank" 
@@ -254,10 +254,10 @@ export default function StockDetailPage() {
               </div>
               
               <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">
                   Description
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                   {stockDetails.description || 'No description available.'}
                 </p>
               </div>
@@ -291,28 +291,28 @@ export default function StockDetailPage() {
           
           {/* News Section */}
           {newsItems.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">
                 Latest News
               </h2>
               <div className="space-y-4">
                 {newsItems.map((news) => (
-                  <div key={news.id} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <div key={news.id} className="border-b border-gray-200 pb-4">
                     <a 
                       href={news.article_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <h3 className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                      <h3 className="text-lg font-medium text-blue-600 hover:underline">
                         {news.title}
                       </h3>
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <div className="flex items-center text-sm text-gray-500 mt-1">
                         <span>{news.publisher?.name || 'Unknown Source'}</span>
                         <span className="mx-2">•</span>
                         <span>{formatDate(news.published_utc)}</span>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      <p className="text-gray-600 mt-2">
                         {news.description}
                       </p>
                     </a>

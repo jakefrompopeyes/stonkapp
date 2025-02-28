@@ -49,14 +49,14 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full shadow-xl">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-bold text-gray-900">
             Stock View Limit
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-700"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,20 +67,20 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
         <div className="mb-6">
           {user ? (
             <>
-              <p className="mb-4 text-gray-700 dark:text-gray-300">
+              <p className="mb-4 text-gray-700">
                 You've used all {AUTHENTICATED_VIEW_LIMIT} of your free stock profile views as a signed-in user.
               </p>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-gray-700">
                 Your view limit will reset on {nextReset}. We're also working on premium plans 
                 that will allow unlimited stock profile views. Stay tuned for updates!
               </p>
             </>
           ) : (
             <>
-              <p className="mb-4 text-gray-700 dark:text-gray-300">
+              <p className="mb-4 text-gray-700">
                 You've used all {ANONYMOUS_VIEW_LIMIT} of your free anonymous stock profile views.
               </p>
-              <p className="mb-4 text-gray-700 dark:text-gray-300">
+              <p className="mb-4 text-gray-700">
                 Sign up or sign in to get {AUTHENTICATED_VIEW_LIMIT} additional free views!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
@@ -101,7 +101,7 @@ export default function ViewLimitPopup({ isOpen, onClose }: ViewLimitPopupProps)
           )}
         </div>
         
-        <div className="text-sm text-gray-500 dark:text-gray-400 border-t pt-4">
+        <div className="text-sm text-gray-500 border-t pt-4">
           <p>
             {user 
               ? `You have used ${totalLimit - remainingViews}/${totalLimit} views as a signed-in user.`
