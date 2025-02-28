@@ -1,0 +1,13 @@
+{
+  "name": "stonkapp-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for StonkApp",
+  "scripts": {
+    "apply-migration": "node apply-migration.js",
+    "create-views-table": "node create-views-table.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "dotenv": "^16.4.5"
+  }
+} 
