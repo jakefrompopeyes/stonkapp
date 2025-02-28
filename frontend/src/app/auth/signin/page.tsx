@@ -42,10 +42,21 @@ function SignInContent() {
     setError(null);
     setIsLoading(true);
 
+    // Add a timeout to detect if the process is hanging
+    const timeoutId = setTimeout(() => {
+      console.warn('Google sign-in process is taking longer than expected (10 seconds)');
+      setError('The sign-in process seems to be taking longer than expected. Please check your network connection or try again later.');
+      // Don't set isLoading to false here to avoid UI jumping if the process completes right after
+    }, 10000);
+
     try {
+      console.log('Starting Google sign-in from button click');
       await signInWithGoogle();
       // No need to redirect here as the OAuth flow will handle it
+      clearTimeout(timeoutId); // Clear the timeout if successful
     } catch (error: any) {
+      clearTimeout(timeoutId); // Clear the timeout if there's an error
+      console.error('Google sign-in error:', error);
       setError(error.message || 'Failed to sign in with Google');
       setIsLoading(false);
     }
