@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Initiating Google OAuth sign-in...');
       
-      // Log the redirect URL for debugging
+      // Simplify the redirect URL
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('Using redirect URL:', redirectUrl);
       
@@ -86,14 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const startTime = new Date().getTime();
       console.log('Starting OAuth process at:', new Date().toISOString());
       
+      // Simplify the OAuth configuration - remove the queryParams that might be causing issues
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
+          redirectTo: redirectUrl
         },
       });
       
