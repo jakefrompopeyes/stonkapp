@@ -36,11 +36,21 @@ function SignInForm() {
         }
         
         if (data.session) {
-          console.log("[SIGNIN] User already has a session, redirecting to home");
-          // Use a small delay to prevent race conditions
-          setTimeout(() => {
-            router.push('/');
-          }, 100);
+          console.log("[SIGNIN] User already has a session");
+          
+          // Check if we were redirected here from another page
+          const from = searchParams.get('from');
+          
+          // Only redirect if we weren't explicitly sent to the sign-in page
+          if (!from) {
+            console.log("[SIGNIN] Not redirected from another page, safe to redirect to home");
+            // Use a small delay to prevent race conditions
+            setTimeout(() => {
+              router.push('/');
+            }, 100);
+          } else {
+            console.log("[SIGNIN] Redirected from:", from, "- not redirecting again to prevent loop");
+          }
         } else {
           console.log("[SIGNIN] No existing session found");
         }

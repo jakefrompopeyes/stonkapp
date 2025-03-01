@@ -66,6 +66,9 @@ export async function middleware(req: NextRequest) {
       
       // Create a redirect response with an incremented redirect count
       const redirectUrl = new URL('/auth/signin', req.url);
+      // Add the 'from' parameter to indicate where the redirect came from
+      redirectUrl.searchParams.set('from', req.nextUrl.pathname);
+      
       const redirectRes = NextResponse.redirect(redirectUrl);
       redirectRes.headers.set('x-redirect-count', (redirectCount + 1).toString());
       
@@ -80,6 +83,8 @@ export async function middleware(req: NextRequest) {
       
       // Create a redirect response with an incremented redirect count
       const redirectUrl = new URL('/auth/signin', req.url);
+      // Add the 'from' parameter to indicate where the redirect came from
+      redirectUrl.searchParams.set('from', req.nextUrl.pathname);
       console.log(`[MIDDLEWARE] Redirect URL: ${redirectUrl.toString()}`);
       
       const redirectRes = NextResponse.redirect(redirectUrl);
@@ -99,6 +104,8 @@ export async function middleware(req: NextRequest) {
     
     // On error, redirect to sign-in as a fallback, with redirect count
     const redirectUrl = new URL('/auth/signin', req.url);
+    // Add the 'from' parameter to indicate where the redirect came from
+    redirectUrl.searchParams.set('from', req.nextUrl.pathname);
     const redirectRes = NextResponse.redirect(redirectUrl);
     redirectRes.headers.set('x-redirect-count', (redirectCount + 1).toString());
     
