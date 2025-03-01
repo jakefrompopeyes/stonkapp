@@ -13,7 +13,7 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { signIn, signInWithGoogle, user } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -26,10 +26,26 @@ function SignInForm() {
     
     // Check if user is already signed in
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        console.log("User already signed in, redirecting to home");
-        router.push('/');
+      try {
+        console.log("[SIGNIN] Checking for existing session");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[SIGNIN] Error checking session:", error);
+          return;
+        }
+        
+        if (data.session) {
+          console.log("[SIGNIN] User already has a session, redirecting to home");
+          // Use a small delay to prevent race conditions
+          setTimeout(() => {
+            router.push('/');
+          }, 100);
+        } else {
+          console.log("[SIGNIN] No existing session found");
+        }
+      } catch (err) {
+        console.error("[SIGNIN] Exception checking session:", err);
       }
     };
     
@@ -47,16 +63,17 @@ function SignInForm() {
     try {
       setError(null);
       setIsLoading(true);
+      console.log("[SIGNIN] Attempting to sign in with email:", email);
       
       await signIn(email, password);
       
+      console.log("[SIGNIN] Sign-in successful, redirecting to home page");
       // Add a small delay to ensure the session is properly set
       setTimeout(() => {
-        console.log("Sign-in successful, redirecting to home page");
         router.push('/');
-      }, 1000);
+      }, 500);
     } catch (err: any) {
-      console.error('Sign in error:', err);
+      console.error('[SIGNIN] Sign in error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
@@ -67,11 +84,12 @@ function SignInForm() {
     try {
       setError(null);
       setIsLoading(true);
+      console.log("[SIGNIN] Attempting to sign in with Google");
       
       await signInWithGoogle();
       // The redirect happens in the signInWithGoogle function
     } catch (err: any) {
-      console.error('Google sign in error:', err);
+      console.error('[SIGNIN] Google sign in error:', err);
       setError(err.message || 'Failed to sign in with Google. Please try again.');
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from './supabase';
 import { User, Session, Provider } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -25,8 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  
+  // Use refs to track manual actions vs. automatic state changes
+  const isManualSignIn = useRef(false);
+  const isManualSignOut = useRef(false);
+  const initialSessionCheckComplete = useRef(false);
 
-  // Function to update auth state
+  // Function to update auth state without triggering redirects
   const updateAuthState = (newSession: Session | null) => {
     console.log('[AUTH] Updating auth state:', newSession ? 'Session exists' : 'No session');
     
@@ -73,9 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         updateAuthState(session);
+        initialSessionCheckComplete.current = true;
       } catch (error) {
         console.error('[AUTH] Error getting initial session:', error);
         setIsLoading(false);
+        initialSessionCheckComplete.current = true;
       }
     };
 
@@ -94,15 +101,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
         
+        // Update the auth state regardless of event type
         updateAuthState(session);
         
-        // Only redirect on explicit sign-in/sign-out actions, not on initial load or refresh
-        if (event === 'SIGNED_IN' && window.location.pathname.includes('/auth/')) {
-          console.log("[AUTH] User signed in from auth page, redirecting to home");
-          router.push('/');
+        // Only handle redirects for explicit manual actions
+        if (event === 'SIGNED_IN') {
+          console.log("[AUTH] SIGNED_IN event detected");
+          
+          // Only redirect if this was a manual sign-in action
+          if (isManualSignIn.current) {
+            console.log("[AUTH] Manual sign-in detected, will redirect");
+            isManualSignIn.current = false; // Reset the flag
+            
+            // Only redirect if we're on an auth page
+            if (window.location.pathname.includes('/auth/')) {
+              console.log("[AUTH] On auth page, redirecting to home");
+              // Use setTimeout to ensure this happens after state updates
+              setTimeout(() => {
+                router.push('/');
+              }, 100);
+            }
+          } else {
+            console.log("[AUTH] Automatic sign-in detected (session refresh), no redirect");
+          }
         } else if (event === 'SIGNED_OUT') {
-          console.log("[AUTH] User signed out, redirecting to home");
-          router.push('/');
+          console.log("[AUTH] SIGNED_OUT event detected");
+          
+          // Only redirect if this was a manual sign-out action
+          if (isManualSignOut.current) {
+            console.log("[AUTH] Manual sign-out detected, will redirect");
+            isManualSignOut.current = false; // Reset the flag
+            
+            // Use setTimeout to ensure this happens after state updates
+            setTimeout(() => {
+              router.push('/');
+            }, 100);
+          } else {
+            console.log("[AUTH] Automatic sign-out detected (session expiry), no redirect");
+          }
         }
       }
     );
@@ -119,10 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log("[AUTH] Signing in user:", email);
       
+      // Set the manual sign-in flag before making the API call
+      isManualSignIn.current = true;
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         console.error("[AUTH] Sign in error:", error);
+        isManualSignIn.current = false; // Reset the flag on error
         throw error;
       }
       
@@ -162,6 +202,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log("[AUTH] Signing in with Google");
       
+      // We don't set the manual flag here because OAuth redirects away from the app
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -189,10 +231,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log("[AUTH] Signing out user");
       
+      // Set the manual sign-out flag before making the API call
+      isManualSignOut.current = true;
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("[AUTH] Sign out error:", error);
+        isManualSignOut.current = false; // Reset the flag on error
         throw error;
       }
       

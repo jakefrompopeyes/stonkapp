@@ -9,16 +9,32 @@ export default function ProfilePage() {
   const router = useRouter();
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Add logging on component mount and updates
   useEffect(() => {
     console.log('[PROFILE] Component mounted or updated');
     console.log('[PROFILE] Current user state:', user ? 'User exists' : 'No user');
+    
+    // Set a timeout to stop showing loading state even if auth is slow
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      console.log('[PROFILE] Forced loading state to end after timeout');
+    }, 2000);
+    
+    // If we have user data, we can stop loading immediately
     if (user) {
+      console.log('[PROFILE] User found, ending loading state');
+      setIsLoading(false);
+      clearTimeout(timer);
+      
       console.log('[PROFILE] User ID:', user.id);
       console.log('[PROFILE] User email:', user.email);
-      console.log('[PROFILE] User metadata:', JSON.stringify(user.user_metadata));
     }
+    
+    return () => {
+      clearTimeout(timer);
+    };
   }, [user]);
 
   // Handle adding a comment
@@ -42,12 +58,29 @@ export default function ProfilePage() {
     }
   };
 
-  // Simple loading state while we wait for auth to initialize
-  if (user === null) {
-    console.log('[PROFILE] Rendering loading state (user is null)');
+  // Show loading state
+  if (isLoading) {
+    console.log('[PROFILE] Rendering loading state');
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // If no user is found after loading completes, show auth required message
+  if (!user) {
+    console.log('[PROFILE] No user found after loading, showing auth required message');
+    return (
+      <div className="max-w-md mx-auto text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+        <p className="mb-6">You need to be signed in to view this page.</p>
+        <button
+          onClick={() => router.push('/auth/signin')}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        >
+          Go to Sign In
+        </button>
       </div>
     );
   }
