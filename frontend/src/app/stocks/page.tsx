@@ -15,6 +15,7 @@ interface WatchlistItem {
   logo_url?: string;
   created_at: string;
   viewed_at: string;
+  is_favorite: boolean;
 }
 
 export default function StocksPage() {
@@ -37,6 +38,7 @@ export default function StocksPage() {
           .from('user_stock_views')
           .select('*')
           .eq('user_id', user.id)
+          .eq('is_favorite', true)  // Only get favorited stocks
           .order('viewed_at', { ascending: false });
 
         if (error) throw error;
@@ -65,7 +67,10 @@ export default function StocksPage() {
         // Update the viewed_at timestamp
         const { error } = await supabase
           .from('user_stock_views')
-          .update({ viewed_at: new Date().toISOString() })
+          .update({ 
+            viewed_at: new Date().toISOString(),
+            is_favorite: true
+          })
           .eq('user_id', user.id)
           .eq('ticker', stock.ticker);
 
@@ -78,7 +83,8 @@ export default function StocksPage() {
             user_id: user.id,
             ticker: stock.ticker,
             name: stock.name,
-            logo_url: stock.logo_url || stock.icon_url
+            logo_url: stock.logo_url || stock.icon_url,
+            is_favorite: true
           });
 
         if (error) throw error;
@@ -89,6 +95,7 @@ export default function StocksPage() {
         .from('user_stock_views')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_favorite', true)
         .order('viewed_at', { ascending: false });
 
       if (error) throw error;
@@ -139,7 +146,7 @@ export default function StocksPage() {
         <h2 className="text-xl font-semibold mb-4">Search for Stocks</h2>
         <StockSearch onSelectStock={addToWatchlist} />
         <p className="mt-2 text-sm text-gray-600">
-          Search for a stock and click on it to add to your watchlist
+          Search for a stock and click on it to add to your watchlist. You can also star stocks on their detail page.
         </p>
       </div>
 
