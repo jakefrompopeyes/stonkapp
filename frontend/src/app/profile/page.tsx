@@ -8,67 +8,50 @@ import { supabase } from '@/lib/supabase';
 export default function ProfilePage() {
   const { user, isLoading, signOut } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [manualSessionCheck, setManualSessionCheck] = useState<boolean>(false);
+  const [sessionUser, setSessionUser] = useState<any>(null);
 
-  // Set client-side flag
+  // Direct session check that doesn't rely on the AuthContext
   useEffect(() => {
-    setIsClient(true);
-    
-    // Check for session directly from Supabase
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      console.log("Current session:", data.session);
-      if (data.session) {
-        // If we have a session directly from Supabase, we're definitely logged in
-        setHasCheckedAuth(true);
+    const checkSessionDirectly = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        console.log("Direct session check:", data.session);
+        
+        if (data.session) {
+          setSessionUser(data.session.user);
+          setManualSessionCheck(true);
+        } else {
+          // Only redirect if we're absolutely sure there's no session
+          router.push('/auth/signin');
+        }
+      } catch (error) {
+        console.error("Error checking session directly:", error);
       }
     };
     
-    checkSession();
-  }, []);
-  
-  // Separate useEffect for authentication check to avoid redirect flashing
-  useEffect(() => {
-    // Only redirect if:
-    // 1. We're on the client
-    // 2. Auth is not loading
-    // 3. We've waited a reasonable time for auth to initialize
-    // 4. There's definitely no user
-    const authCheckTimeout = setTimeout(() => {
-      setHasCheckedAuth(true);
-    }, 2000); // Give auth 2 seconds to initialize before making a decision
-    
-    return () => clearTimeout(authCheckTimeout);
-  }, []);
-  
-  // Handle redirect only after we've checked auth
-  useEffect(() => {
-    if (isClient && !isLoading && hasCheckedAuth && !user) {
-      console.log("No user found after checking auth, redirecting to sign in");
-      router.push('/auth/signin');
-    } else if (isClient && user) {
-      console.log("User authenticated:", user.email);
-    }
-  }, [user, isLoading, router, isClient, hasCheckedAuth]);
+    checkSessionDirectly();
+  }, [router]);
 
   // Fetch user's subscription data
   useEffect(() => {
     const fetchSubscription = async () => {
-      if (!user) return;
+      // Use either the context user or the directly fetched session user
+      const currentUser = user || sessionUser;
+      if (!currentUser) return;
       
       try {
         setIsLoadingSubscription(true);
         const { data, error } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -86,10 +69,12 @@ export default function ProfilePage() {
     };
     
     fetchSubscription();
-  }, [user]);
+  }, [user, sessionUser]);
 
   const handleCancelSubscription = async () => {
-    if (!user || !subscription) return;
+    // Use either the context user or the directly fetched session user
+    const currentUser = user || sessionUser;
+    if (!currentUser || !subscription) return;
     
     try {
       setIsCancelling(true);
@@ -130,7 +115,7 @@ export default function ProfilePage() {
   };
 
   // Show loading state while checking authentication
-  if (isLoading || !isClient) {
+  if (isLoading && !manualSessionCheck) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -138,8 +123,9 @@ export default function ProfilePage() {
     );
   }
 
-  // If we have a user, show the profile page
-  if (user) {
+  // If we have a user (either from context or direct session check), show the profile page
+  const currentUser = user || sessionUser;
+  if (currentUser) {
     return (
       <div className="max-w-4xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
@@ -174,18 +160,18 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-gray-500 text-sm mb-1">Email</p>
-              <p className="font-medium">{user.email}</p>
+              <p className="font-medium">{currentUser.email}</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Account ID</p>
-              <p className="font-medium">{user.id.substring(0, 8)}...</p>
+              <p className="font-medium">{currentUser.id.substring(0, 8)}...</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Email Verified</p>
               <p className="font-medium">
-                {user.email_confirmed_at ? (
+                {currentUser.email_confirmed_at ? (
                   <span className="text-green-600">Verified</span>
                 ) : (
                   <span className="text-red-600">Not verified</span>
@@ -196,7 +182,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-gray-500 text-sm mb-1">Last Sign In</p>
               <p className="font-medium">
-                {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
+                {currentUser.last_sign_in_at ? new Date(currentUser.last_sign_in_at).toLocaleString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -333,6 +319,10 @@ export default function ProfilePage() {
     );
   }
 
-  // This should not be reached due to the redirect, but just in case
-  return null;
+  // Show loading while we're checking the session directly
+  return (
+    <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
 } 
