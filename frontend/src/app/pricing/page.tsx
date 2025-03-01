@@ -14,8 +14,6 @@ const plans = [
     description: 'Basic access to stock information',
     features: [
       '3 stock views per month',
-      'Basic stock information',
-      'Price history charts',
     ],
     buttonText: 'Current Plan',
     disabled: true,
@@ -29,10 +27,6 @@ const plans = [
     description: 'Enhanced access to stock data',
     features: [
       '25 stock views per month',
-      'Advanced financial metrics',
-      'Insider trading data',
-      'Company financials',
-      'Email alerts for price changes',
     ],
     buttonText: 'Subscribe',
     disabled: false,
@@ -47,12 +41,6 @@ const plans = [
     description: 'Professional-grade stock analysis',
     features: [
       'Unlimited stock views',
-      'All Pro features',
-      'Real-time stock data',
-      'Advanced technical indicators',
-      'Portfolio tracking',
-      'API access',
-      'Priority support',
     ],
     buttonText: 'Subscribe',
     disabled: false,
