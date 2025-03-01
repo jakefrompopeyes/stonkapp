@@ -31,6 +31,9 @@ export default function Header() {
             <Link href="/stock" className="hover:text-blue-300">
               Stocks
             </Link>
+            <Link href="/stocks" className="hover:text-blue-300">
+              Watchlist
+            </Link>
             
             {/* Upgrade button - desktop */}
             <Link 
@@ -132,6 +135,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Stocks
+            </Link>
+            <Link 
+              href="/stocks" 
+              className="block py-2 hover:text-blue-300"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Watchlist
             </Link>
             
             {/* Upgrade button - mobile */}
