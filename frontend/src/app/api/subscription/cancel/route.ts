@@ -30,68 +30,94 @@ export async function POST(request: NextRequest) {
   try {
     // Get the request body
     const body = await request.json();
-    const { subscriptionId } = body;
+    const { subscriptionId, customerId } = body;
 
-    if (!subscriptionId) {
+    // We need either a subscription ID or a customer ID
+    if (!subscriptionId && !customerId) {
       return NextResponse.json(
-        { error: 'Subscription ID is required' },
+        { error: 'Either Subscription ID or Customer ID is required' },
         { status: 400 }
       );
     }
 
-    // Get the subscription from the database
-    const { data: subscription, error: fetchError } = await supabaseAdmin
-      .from('subscriptions')
-      .select('*')
-      .eq('id', subscriptionId)
-      .single();
+    let stripeSubscriptionId: string;
 
-    if (fetchError || !subscription) {
-      console.error('Error fetching subscription:', fetchError);
-      return NextResponse.json(
-        { error: 'Subscription not found' },
-        { status: 404 }
-      );
-    }
+    if (subscriptionId) {
+      // Get the subscription from the database
+      const { data: subscription, error: fetchError } = await supabaseAdmin
+        .from('subscriptions')
+        .select('*')
+        .eq('id', subscriptionId)
+        .single();
 
-    // Check if the subscription has a Stripe subscription ID
-    if (!subscription.stripe_subscription_id) {
-      return NextResponse.json(
-        { error: 'No Stripe subscription found' },
-        { status: 400 }
-      );
+      if (fetchError || !subscription) {
+        console.error('Error fetching subscription:', fetchError);
+        return NextResponse.json(
+          { error: 'Subscription not found' },
+          { status: 404 }
+        );
+      }
+
+      // Check if the subscription has a Stripe subscription ID
+      if (!subscription.stripe_subscription_id) {
+        return NextResponse.json(
+          { error: 'No Stripe subscription found' },
+          { status: 400 }
+        );
+      }
+
+      stripeSubscriptionId = subscription.stripe_subscription_id;
+    } else {
+      // Find the active subscription for this customer
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (!subscriptions || subscriptions.data.length === 0) {
+        return NextResponse.json(
+          { error: 'No active subscription found for this customer' },
+          { status: 404 }
+        );
+      }
+
+      stripeSubscriptionId = subscriptions.data[0].id;
     }
 
     // Cancel the subscription at the end of the billing period
     const stripeSubscription = await stripe.subscriptions.update(
-      subscription.stripe_subscription_id,
+      stripeSubscriptionId,
       { cancel_at_period_end: true }
     );
 
-    // Update the subscription in the database
-    const { error: updateError } = await supabaseAdmin
-      .from('subscriptions')
-      .update({
-        status: 'active', // Still active until the end of the period
-        cancel_at_period_end: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', subscriptionId);
+    // Update the user's profile in the database
+    if (customerId) {
+      // Find the user by Stripe customer ID
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('stripe_customer_id', customerId);
 
-    if (updateError) {
-      console.error('Error updating subscription in database:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update subscription status' },
-        { status: 500 }
-      );
+      if (profiles && profiles.length > 0) {
+        const userId = profiles[0].id;
+        
+        // Update the user's subscription status to indicate it will be canceled
+        await supabaseAdmin
+          .from('profiles')
+          .update({
+            cancel_at_period_end: true,
+          })
+          .eq('id', userId);
+      }
     }
 
     return NextResponse.json({
       success: true,
       message: 'Subscription will be canceled at the end of the billing period',
       subscription: {
-        id: subscription.id,
-        status: 'active',
+        id: stripeSubscription.id,
+        status: stripeSubscription.status,
         cancel_at_period_end: true,
         current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
       },

@@ -4,14 +4,20 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { hasProSubscription, hasUnlimitedViews } from '@/lib/viewLimits';
 
 export default function ProfilePage() {
   const { user, signOut, refreshUser } = useAuth();
   const router = useRouter();
-  const [comment, setComment] = useState('');
-  const [comments, setComments] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionStatus, setSessionStatus] = useState<string>('Checking...');
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    status: string;
+    tier: string;
+    isActive: boolean;
+    willCancel?: boolean;
+  }>({ status: 'none', tier: 'free', isActive: false });
+  const [cancelLoading, setCancelLoading] = useState(false);
   
   // Add logging on component mount and updates
   useEffect(() => {
@@ -68,19 +74,36 @@ export default function ProfilePage() {
       console.log('[PROFILE] User email:', user.email);
     }
     
+    // Check subscription status
+    const checkSubscription = async () => {
+      if (user?.id) {
+        const hasPro = await hasProSubscription(user.id);
+        const hasPremium = await hasUnlimitedViews(user.id);
+        
+        // Get user profile to get subscription details
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_status, subscription_tier, stripe_customer_id, cancel_at_period_end')
+          .eq('id', user.id)
+          .single();
+          
+        if (profile) {
+          setSubscriptionInfo({
+            status: profile.subscription_status || 'none',
+            tier: profile.subscription_tier || 'free',
+            isActive: profile.subscription_status === 'active',
+            willCancel: profile.cancel_at_period_end || false
+          });
+        }
+      }
+    };
+    
+    checkSubscription();
+    
     return () => {
       clearTimeout(timer);
     };
   }, [user, refreshUser]);
-
-  // Handle adding a comment
-  const handleAddComment = () => {
-    if (comment.trim()) {
-      console.log('[PROFILE] Adding comment:', comment);
-      setComments([...comments, comment]);
-      setComment('');
-    }
-  };
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -105,6 +128,57 @@ export default function ProfilePage() {
       console.error('[PROFILE] Manual refresh error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user?.id) return;
+    
+    setCancelLoading(true);
+    
+    try {
+      // Get user profile to get subscription details
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('stripe_customer_id')
+        .eq('id', user.id)
+        .single();
+        
+      if (!profile?.stripe_customer_id) {
+        throw new Error('No subscription found');
+      }
+      
+      // Call the cancel API with the user's stripe customer ID
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId: profile.stripe_customer_id,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      // Update local state
+      setSubscriptionInfo(prev => ({
+        ...prev,
+        status: 'active', // Still active until the end of the period
+        isActive: true,
+        willCancel: true
+      }));
+      
+      alert('Your subscription will be canceled at the end of the current billing period.');
+    } catch (error: any) {
+      console.error('Error canceling subscription:', error);
+      alert(`Failed to cancel subscription: ${error.message}`);
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -177,53 +251,68 @@ export default function ProfilePage() {
         </div>
       </div>
       
-      {/* Debug Information */}
-      <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg mb-6 overflow-auto max-h-60">
-        <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
-        <p className="mb-2 text-sm">Session Status: {sessionStatus}</p>
-        <pre className="text-xs whitespace-pre-wrap">
-          {JSON.stringify({
-            userId: user?.id,
-            email: user?.email,
-            aud: user?.aud,
-            created_at: user?.created_at,
-            last_sign_in_at: user?.last_sign_in_at,
-            app_metadata: user?.app_metadata,
-            user_metadata: user?.user_metadata,
-          }, null, 2)}
-        </pre>
-      </div>
-      
-      {/* Comments Section */}
+      {/* Subscription Information */}
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Comments</h2>
+        <h2 className="text-xl font-semibold mb-4">Subscription Information</h2>
         
-        <div className="mb-4">
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
-            rows={3}
-            placeholder="Add a comment..."
-          ></textarea>
-          <button
-            onClick={handleAddComment}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Add Comment
-          </button>
-        </div>
+        <p className="mb-2">
+          <span className="font-medium">Current Plan:</span>{' '}
+          {subscriptionInfo.tier === 'premium' 
+            ? 'Premium' 
+            : subscriptionInfo.tier === 'pro' 
+              ? 'Pro' 
+              : 'Free'}
+        </p>
         
-        {comments.length > 0 ? (
-          <div className="space-y-3">
-            {comments.map((c, i) => (
-              <div key={i} className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                {c}
-              </div>
-            ))}
+        <p className="mb-4">
+          <span className="font-medium">Status:</span>{' '}
+          {subscriptionInfo.status === 'active' 
+            ? subscriptionInfo.willCancel
+              ? 'Active (Cancels at end of billing period)'
+              : 'Active' 
+            : subscriptionInfo.status === 'canceled' 
+              ? 'Canceled' 
+              : subscriptionInfo.status === 'past_due' 
+                ? 'Past Due' 
+                : 'None'}
+        </p>
+        
+        {subscriptionInfo.isActive && !subscriptionInfo.willCancel && (subscriptionInfo.tier === 'premium' || subscriptionInfo.tier === 'pro') && (
+          <div>
+            <button
+              onClick={handleCancelSubscription}
+              disabled={cancelLoading}
+              className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors disabled:opacity-50"
+            >
+              {cancelLoading ? 'Processing...' : 'Cancel Subscription'}
+            </button>
+            <p className="mt-2 text-sm text-gray-500">
+              Your subscription will remain active until the end of the current billing period.
+            </p>
           </div>
-        ) : (
-          <p className="text-gray-500">No comments yet. Be the first to add one!</p>
+        )}
+        
+        {subscriptionInfo.isActive && subscriptionInfo.willCancel && (
+          <div>
+            <p className="text-yellow-600 font-medium mb-2">
+              Your subscription will be canceled at the end of the current billing period.
+            </p>
+            <p className="text-sm text-gray-500">
+              You'll still have access to all premium features until then.
+            </p>
+          </div>
+        )}
+        
+        {!subscriptionInfo.isActive && (
+          <div>
+            <p className="mb-2">Upgrade your plan to access more features!</p>
+            <button
+              onClick={() => router.push('/pricing')}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              View Plans
+            </button>
+          </div>
         )}
       </div>
     </div>
