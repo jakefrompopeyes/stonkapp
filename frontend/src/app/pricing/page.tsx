@@ -37,6 +37,7 @@ const plans = [
     buttonText: 'Subscribe',
     disabled: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
+    popular: true,
   },
   {
     id: 'premium',
@@ -56,7 +57,6 @@ const plans = [
     buttonText: 'Subscribe',
     disabled: false,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID || '',
-    popular: true,
   },
 ];
 
