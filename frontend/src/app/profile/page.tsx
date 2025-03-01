@@ -14,48 +14,67 @@ export default function ProfilePage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [localUser, setLocalUser] = useState<any>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   // Check authentication and redirect if needed
   useEffect(() => {
     const checkAuth = async () => {
-      // First check if we're already authenticated via context
-      if (isAuthenticated) {
-        console.log("User is authenticated via context:", user?.email);
-        return;
-      }
-      
-      // If not authenticated and not loading, do a direct session check
-      if (!isLoading && !isAuthenticated) {
-        try {
-          const { data } = await supabase.auth.getSession();
-          console.log("Direct session check:", data.session);
-          
-          // If no session found after direct check, redirect to sign-in
-          if (!data.session) {
-            console.log("No session found, redirecting to sign-in");
-            router.push('/auth/signin');
-          }
-        } catch (error) {
+      try {
+        setIsCheckingSession(true);
+        
+        // First check if we already have a user in the context
+        if (user) {
+          console.log("User found in context:", user.email);
+          setLocalUser(user);
+          setIsCheckingSession(false);
+          return;
+        }
+        
+        // If no user in context, check for a session directly
+        console.log("No user in context, checking session directly");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
           console.error("Error checking session:", error);
           router.push('/auth/signin');
+          return;
         }
+        
+        console.log("Direct session check result:", data.session ? "Session found" : "No session");
+        
+        if (data.session) {
+          // We have a session but no user in context, set the local user
+          setLocalUser(data.session.user);
+          setIsCheckingSession(false);
+        } else {
+          // No session found, redirect to sign-in
+          console.log("No session found, redirecting to sign-in");
+          router.push('/auth/signin');
+        }
+      } catch (error) {
+        console.error("Error in auth check:", error);
+        router.push('/auth/signin');
+      } finally {
+        setIsCheckingSession(false);
       }
     };
     
     checkAuth();
-  }, [user, isLoading, isAuthenticated, router]);
+  }, [user, router]);
 
-  // Fetch user's subscription data
+  // Fetch user's subscription data when we have a user
   useEffect(() => {
+    const currentUser = user || localUser;
+    if (!currentUser) return;
+    
     const fetchSubscription = async () => {
-      if (!user) return;
-      
       try {
         setIsLoadingSubscription(true);
         const { data, error } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -73,10 +92,11 @@ export default function ProfilePage() {
     };
     
     fetchSubscription();
-  }, [user]);
+  }, [user, localUser]);
 
   const handleCancelSubscription = async () => {
-    if (!user || !subscription) return;
+    const currentUser = user || localUser;
+    if (!currentUser || !subscription) return;
     
     try {
       setIsCancelling(true);
@@ -117,7 +137,7 @@ export default function ProfilePage() {
   };
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (isLoading || isCheckingSession) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -125,8 +145,9 @@ export default function ProfilePage() {
     );
   }
 
-  // If we have a user, show the profile page
-  if (user) {
+  // If we have a user (either from context or direct session check), show the profile page
+  const currentUser = user || localUser;
+  if (currentUser) {
     return (
       <div className="max-w-4xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
@@ -161,18 +182,18 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-gray-500 text-sm mb-1">Email</p>
-              <p className="font-medium">{user.email}</p>
+              <p className="font-medium">{currentUser.email}</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Account ID</p>
-              <p className="font-medium">{user.id.substring(0, 8)}...</p>
+              <p className="font-medium">{currentUser.id.substring(0, 8)}...</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Email Verified</p>
               <p className="font-medium">
-                {user.email_confirmed_at ? (
+                {currentUser.email_confirmed_at ? (
                   <span className="text-green-600">Verified</span>
                 ) : (
                   <span className="text-red-600">Not verified</span>
@@ -183,7 +204,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-gray-500 text-sm mb-1">Last Sign In</p>
               <p className="font-medium">
-                {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
+                {currentUser.last_sign_in_at ? new Date(currentUser.last_sign_in_at).toLocaleString() : 'N/A'}
               </p>
             </div>
           </div>
@@ -320,7 +341,11 @@ export default function ProfilePage() {
     );
   }
 
-  // Show loading while we're checking the session directly
+  // If we get here, we're not authenticated and not loading
+  console.log("No user found after checks, redirecting to sign-in");
+  router.push('/auth/signin');
+  
+  // Show loading while redirect happens
   return (
     <div className="flex justify-center items-center min-h-[60vh]">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>

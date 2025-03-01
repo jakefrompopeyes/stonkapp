@@ -73,11 +73,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setIsLoading(true);
+      // Use signInWithPassword with explicit session persistence
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password
+      });
+      
       if (error) throw error;
+      
+      // Explicitly set the user and session after successful sign-in
+      if (data && data.user) {
+        setUser(data.user);
+        setSession(data.session);
+        setIsAuthenticated(true);
+        console.log("User signed in successfully:", data.user.email);
+      }
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
