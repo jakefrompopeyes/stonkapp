@@ -91,8 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo: redirectUrl,
           // Important: Do NOT add any additional query parameters to the redirectTo URL
           queryParams: {
-            // Force consent screen to show every time
-            prompt: 'consent',
+            // Show account selection screen every time
+            prompt: 'select_account',
             // Ensure we get a fresh authentication
             access_type: 'offline',
             // Include email scope explicitly
