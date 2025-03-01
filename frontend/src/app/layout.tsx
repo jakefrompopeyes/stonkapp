@@ -9,6 +9,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'StonkApp',
   description: 'Track and manage your investments',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/images/apple-icon.png',
+  },
 }
 
 export default function RootLayout({
@@ -18,6 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           <Header />
