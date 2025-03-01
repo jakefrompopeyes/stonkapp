@@ -11,6 +11,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const authCheckAttempted = useRef(false);
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState<string[]>([]);
 
   // Add debug log function
   const addDebugLog = (message: string) => {
@@ -58,6 +60,15 @@ export default function ProfilePage() {
     
     checkAuth();
   }, [auth]);
+
+  // Handle comment submission
+  const handleCommentSubmit = () => {
+    if (comment.trim()) {
+      setComments(prev => [...prev, comment]);
+      setComment('');
+      console.log('Comment submitted:', comment);
+    }
+  };
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -151,9 +162,45 @@ export default function ProfilePage() {
         </div>
       </div>
       
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow rounded-lg p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">Subscription</h2>
         <p>Your subscription information will appear here.</p>
+      </div>
+      
+      {/* Comments Section */}
+      <div className="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Comments</h2>
+        
+        {/* Comment Input */}
+        <div className="mb-4">
+          <textarea
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
+            placeholder="Write a comment..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          ></textarea>
+          <button
+            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleCommentSubmit}
+          >
+            Post Comment
+          </button>
+        </div>
+        
+        {/* Comments List */}
+        <div className="space-y-4">
+          {comments.length > 0 ? (
+            comments.map((text, index) => (
+              <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-800">{text}</p>
+                <p className="text-xs text-gray-500 mt-1">Posted just now</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+          )}
+        </div>
       </div>
       
       {/* Debug information */}
