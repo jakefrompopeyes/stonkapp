@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 // Constants for view limits
 export const ANONYMOUS_VIEW_LIMIT = 2;
 export const AUTHENTICATED_VIEW_LIMIT = 3;
+export const PRO_VIEW_LIMIT = 25;
 export const TOTAL_FREE_VIEWS = ANONYMOUS_VIEW_LIMIT + AUTHENTICATED_VIEW_LIMIT;
 
 // Local storage key for anonymous views
@@ -141,13 +142,33 @@ export async function hasUnlimitedViews(userId: string | null): Promise<boolean>
     
     if (!profile) return false;
     
-    // Check if user has an active premium subscription
+    // Check if user has an active premium subscription (only premium tier has unlimited views)
     return (
       profile.subscription_status === 'active' && 
-      (profile.subscription_tier === 'premium' || profile.subscription_tier === 'pro')
+      profile.subscription_tier === 'premium'
     );
   } catch (error) {
     console.error('Error checking premium status:', error);
+    return false;
+  }
+}
+
+// Check if user has pro subscription
+export async function hasProSubscription(userId: string | null): Promise<boolean> {
+  if (!userId) return false;
+  
+  try {
+    const profile = await getUserProfile(userId);
+    
+    if (!profile) return false;
+    
+    // Check if user has an active pro subscription
+    return (
+      profile.subscription_status === 'active' && 
+      profile.subscription_tier === 'pro'
+    );
+  } catch (error) {
+    console.error('Error checking pro status:', error);
     return false;
   }
 }
@@ -168,6 +189,10 @@ export async function checkViewLimit(userId: string | null, ticker: string): Pro
         return false;
       }
       
+      // Check if user has pro subscription with 25 views
+      const hasPro = await hasProSubscription(userId);
+      console.log(`User ${userId} has pro subscription: ${hasPro}`);
+      
       // Get current views
       const views = await getAuthenticatedViews(userId);
       console.log(`User ${userId} has viewed these stocks:`, views);
@@ -178,9 +203,10 @@ export async function checkViewLimit(userId: string | null, ticker: string): Pro
         return false;
       }
       
-      // If user has reached their limit
-      if (views.length >= AUTHENTICATED_VIEW_LIMIT) {
-        console.log(`User ${userId} has reached view limit (${views.length}/${AUTHENTICATED_VIEW_LIMIT})`);
+      // If user has reached their limit (based on subscription)
+      const viewLimit = hasPro ? PRO_VIEW_LIMIT : AUTHENTICATED_VIEW_LIMIT;
+      if (views.length >= viewLimit) {
+        console.log(`User ${userId} has reached view limit (${views.length}/${viewLimit})`);
         return true;
       }
       
@@ -252,65 +278,77 @@ export async function checkViewLimit(userId: string | null, ticker: string): Pro
 export async function getRemainingViews(userId: string | null): Promise<number> {
   console.log(`getRemainingViews called for ${userId ? 'user ' + userId : 'anonymous user'}`);
   
+  // For authenticated users
   if (userId) {
     try {
       // Check if user has premium subscription with unlimited views
       const hasUnlimited = await hasUnlimitedViews(userId);
+      console.log(`User ${userId} has unlimited views: ${hasUnlimited}`);
+      
       if (hasUnlimited) {
-        console.log(`User ${userId} has unlimited views, returning 999`);
-        // Return a high number to indicate unlimited views
-        return 999;
+        // Premium users have unlimited views
+        return Infinity;
       }
       
-      // Try to get views using the helper function
-      let views: string[] = [];
-      try {
-        views = await getAuthenticatedViews(userId);
-        console.log(`Got ${views.length} views using helper function`);
-      } catch (e) {
-        console.error('Error getting views with helper function:', e);
-        
-        // Fall back to direct query
-        try {
-          const { data, error } = await supabase
-            .from('user_stock_views')
-            .select('ticker')
-            .eq('user_id', userId);
-            
-          if (error) {
-            console.error('Error with direct query:', error);
-          } else {
-            views = data.map(view => view.ticker);
-            console.log(`Got ${views.length} views using direct query`);
-          }
-        } catch (directError) {
-          console.error('Error with direct query:', directError);
-        }
+      // Check if user has pro subscription with 25 views
+      const hasPro = await hasProSubscription(userId);
+      console.log(`User ${userId} has pro subscription: ${hasPro}`);
+      
+      if (hasPro) {
+        // Get current views for pro users
+        const views = await getAuthenticatedViews(userId);
+        console.log(`Pro user ${userId} has viewed ${views.length} stocks`);
+        return Math.max(0, PRO_VIEW_LIMIT - views.length);
       }
       
-      const remaining = Math.max(0, AUTHENTICATED_VIEW_LIMIT - views.length);
-      console.log(`User ${userId} has ${remaining} remaining views out of ${AUTHENTICATED_VIEW_LIMIT}`);
-      return remaining;
+      // For regular authenticated users
+      const views = await getAuthenticatedViews(userId);
+      console.log(`Regular user ${userId} has viewed ${views.length} stocks`);
+      return Math.max(0, AUTHENTICATED_VIEW_LIMIT - views.length);
     } catch (error) {
       console.error('Error in getRemainingViews for authenticated user:', error);
-      // If there's an error, assume user has all views available
-      return AUTHENTICATED_VIEW_LIMIT;
+      return AUTHENTICATED_VIEW_LIMIT; // Default to max views if there's an error
     }
-  } else {
+  } 
+  // For anonymous users
+  else {
     try {
       const views = getAnonymousViews();
-      const remaining = Math.max(0, ANONYMOUS_VIEW_LIMIT - Object.keys(views).length);
-      console.log(`Anonymous user has ${remaining} remaining views out of ${ANONYMOUS_VIEW_LIMIT}`);
-      return remaining;
+      const viewCount = Object.keys(views).length;
+      return Math.max(0, ANONYMOUS_VIEW_LIMIT - viewCount);
     } catch (error) {
       console.error('Error in getRemainingViews for anonymous user:', error);
-      // If there's an error, assume user has all views available
-      return ANONYMOUS_VIEW_LIMIT;
+      return ANONYMOUS_VIEW_LIMIT; // Default to max views if there's an error
     }
   }
 }
 
-// Get total view limit for a user
+// Get total view limit for a user (async version that checks subscription)
+export async function getUserViewLimit(userId: string | null): Promise<number> {
+  if (!userId) return ANONYMOUS_VIEW_LIMIT;
+  
+  try {
+    // Check if user has premium subscription with unlimited views
+    const hasUnlimited = await hasUnlimitedViews(userId);
+    if (hasUnlimited) {
+      return Infinity;
+    }
+    
+    // Check if user has pro subscription with 25 views
+    const hasPro = await hasProSubscription(userId);
+    if (hasPro) {
+      return PRO_VIEW_LIMIT;
+    }
+    
+    // Regular authenticated users
+    return AUTHENTICATED_VIEW_LIMIT;
+  } catch (error) {
+    console.error('Error in getUserViewLimit:', error);
+    return AUTHENTICATED_VIEW_LIMIT; // Default to authenticated limit if there's an error
+  }
+}
+
+// Legacy function for backward compatibility (sync version)
 export function getTotalViewLimit(isAuthenticated: boolean): number {
   return isAuthenticated ? AUTHENTICATED_VIEW_LIMIT : ANONYMOUS_VIEW_LIMIT;
 } 

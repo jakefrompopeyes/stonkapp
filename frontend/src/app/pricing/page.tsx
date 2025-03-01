@@ -13,7 +13,7 @@ const plans = [
     price: '$0',
     description: 'Basic access to stock information',
     features: [
-      '5 stock views per month',
+      '3 stock views per month',
       'Basic stock information',
       'Price history charts',
     ],
@@ -22,13 +22,13 @@ const plans = [
     priceId: '',
   },
   {
-    id: 'premium',
-    name: 'Premium',
+    id: 'pro',
+    name: 'Pro',
     price: '$9.99',
     period: 'per month',
     description: 'Enhanced access to stock data',
     features: [
-      'Unlimited stock views',
+      '25 stock views per month',
       'Advanced financial metrics',
       'Insider trading data',
       'Company financials',
@@ -36,17 +36,17 @@ const plans = [
     ],
     buttonText: 'Subscribe',
     disabled: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID || '',
-    popular: true,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
   },
   {
-    id: 'pro',
-    name: 'Pro',
+    id: 'premium',
+    name: 'Premium',
     price: '$19.99',
     period: 'per month',
     description: 'Professional-grade stock analysis',
     features: [
-      'All Premium features',
+      'Unlimited stock views',
+      'All Pro features',
       'Real-time stock data',
       'Advanced technical indicators',
       'Portfolio tracking',
@@ -55,7 +55,8 @@ const plans = [
     ],
     buttonText: 'Subscribe',
     disabled: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID || '',
+    popular: true,
   },
 ];
 

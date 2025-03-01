@@ -2,10 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getRemainingViews, getTotalViewLimit, hasUnlimitedViews, getAuthenticatedViews } from '@/lib/viewLimits';
+import { 
+  getRemainingViews, 
+  getTotalViewLimit, 
+  hasUnlimitedViews, 
+  hasProSubscription,
+  getUserViewLimit,
+  getAuthenticatedViews, 
+  AUTHENTICATED_VIEW_LIMIT, 
+  ANONYMOUS_VIEW_LIMIT,
+  PRO_VIEW_LIMIT
+} from '@/lib/viewLimits';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { AUTHENTICATED_VIEW_LIMIT, ANONYMOUS_VIEW_LIMIT } from '@/lib/viewLimits';
 
 export default function ViewCounter() {
   const { user } = useAuth();
@@ -14,6 +23,7 @@ export default function ViewCounter() {
   const [loading, setLoading] = useState(true);
   const [nextReset, setNextReset] = useState<string>('');
   const [isUnlimited, setIsUnlimited] = useState<boolean>(false);
+  const [isPro, setIsPro] = useState<boolean>(false);
   const [resetDate, setResetDate] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,12 +32,19 @@ export default function ViewCounter() {
     const fetchViewData = async () => {
       setLoading(true);
       try {
-        // Check if user has unlimited views
+        // Check if user has unlimited views (premium)
         const unlimited = user ? await hasUnlimitedViews(user.id) : false;
         setIsUnlimited(unlimited);
         
+        // Check if user has pro subscription
+        const pro = user ? await hasProSubscription(user.id) : false;
+        setIsPro(pro);
+        
+        // Get remaining views
         const remaining = await getRemainingViews(user?.id || null);
-        const total = getTotalViewLimit(!!user);
+        
+        // Get total view limit based on subscription
+        const total = user ? await getUserViewLimit(user.id) : ANONYMOUS_VIEW_LIMIT;
         
         setRemainingViews(remaining);
         setTotalViews(total);
@@ -64,7 +81,13 @@ export default function ViewCounter() {
         // Add a timeout to prevent UI blocking
         const timeoutPromise = new Promise<number>((resolve) => {
           // Default to showing max views if we time out
-          setTimeout(() => resolve(user ? AUTHENTICATED_VIEW_LIMIT : ANONYMOUS_VIEW_LIMIT), 3000);
+          setTimeout(() => {
+            if (user) {
+              resolve(AUTHENTICATED_VIEW_LIMIT);
+            } else {
+              resolve(ANONYMOUS_VIEW_LIMIT);
+            }
+          }, 3000);
         });
         
         // Race the actual view count fetch against the timeout
@@ -117,6 +140,49 @@ export default function ViewCounter() {
           
           <div className="text-xs text-gray-500 mt-1 text-right">
             Premium subscription active
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user has pro subscription, show a pro display
+  if (isPro) {
+    // Calculate percentage for the progress bar and used views
+    const usedViews = totalViews - remainingViews;
+    const percentage = Math.max(0, Math.min(100, (usedViews / PRO_VIEW_LIMIT) * 100));
+
+    return (
+      <div className="bg-white rounded-lg p-3 shadow-sm">
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-medium text-gray-700">Stock Views</span>
+            <span className="text-sm text-gray-500 ml-4">
+              {usedViews} / {PRO_VIEW_LIMIT} used
+            </span>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden w-full">
+            <div 
+              className="h-full bg-green-500 transition-all duration-500 ease-in-out"
+              style={{ width: `${percentage}%` }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between items-center mt-1">
+            {/* Reset date */}
+            <div className="text-xs text-gray-500">
+              Resets on {nextReset}
+            </div>
+            
+            {/* Upgrade button */}
+            <Link 
+              href="/pricing" 
+              className="text-xs text-blue-600 font-medium hover:text-blue-800"
+            >
+              Upgrade to Premium →
+            </Link>
           </div>
         </div>
       </div>
