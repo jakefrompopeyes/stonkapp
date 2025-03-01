@@ -11,21 +11,22 @@ export default function ProfilePage() {
   const [isClient, setIsClient] = useState(false);
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    
-    // If not loading and no user, redirect to sign in
-    if (!isLoading && !user) {
+  }, []);
+  
+  // Separate useEffect for authentication check to avoid redirect flashing
+  useEffect(() => {
+    // Only redirect if we're on the client, not loading, and there's no user
+    if (isClient && !isLoading && !user) {
       router.push('/auth/signin');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, isClient]);
 
   // Fetch user's subscription data
   useEffect(() => {
@@ -56,42 +57,6 @@ export default function ProfilePage() {
     
     fetchSubscription();
   }, [user]);
-
-  const handleDeleteAccount = async () => {
-    if (!user) return;
-    
-    try {
-      setIsDeleting(true);
-      setError(null);
-      
-      // Call the API to delete the user account
-      const response = await fetch('/api/user/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete account');
-      }
-      
-      // Sign out the user
-      await signOut();
-      
-      // Redirect to home page
-      router.push('/');
-    } catch (err: any) {
-      console.error('Error deleting account:', err);
-      setError(err.message || 'Failed to delete account. Please try again later.');
-      setIsDeleting(false);
-    }
-  };
 
   const handleCancelSubscription = async () => {
     if (!user || !subscription) return;
@@ -290,49 +255,6 @@ export default function ProfilePage() {
                 View Premium Plans
               </a>
             </div>
-          )}
-        </div>
-        
-        {/* Account Deletion */}
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Delete Account</h2>
-          <p className="mb-4 text-gray-600">
-            Permanently delete your account and all associated data. This action cannot be undone.
-          </p>
-          
-          {showDeleteConfirm ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="mb-4 font-medium text-red-700">Are you absolutely sure you want to delete your account?</p>
-              <p className="mb-4 text-gray-700">This will permanently delete:</p>
-              <ul className="list-disc pl-5 mb-4 text-gray-700">
-                <li>Your user profile and personal information</li>
-                <li>Your watchlist and saved stocks</li>
-                <li>Your subscription information</li>
-                <li>All other data associated with your account</li>
-              </ul>
-              <div className="flex space-x-4">
-                <button
-                  onClick={handleDeleteAccount}
-                  disabled={isDeleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                >
-                  {isDeleting ? 'Deleting...' : 'Yes, Delete My Account'}
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                >
-                  No, Keep My Account
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              Delete Account
-            </button>
           )}
         </div>
         
