@@ -5,6 +5,11 @@ import type { NextRequest } from 'next/server';
 export async function middleware(req: NextRequest) {
   console.log(`Middleware processing: ${req.nextUrl.pathname}`);
   
+  // Only protect profile routes
+  if (!req.nextUrl.pathname.startsWith('/profile')) {
+    return NextResponse.next();
+  }
+  
   // Create a response to modify
   const res = NextResponse.next();
   
@@ -39,27 +44,20 @@ export async function middleware(req: NextRequest) {
     // Get the session
     const { data } = await supabase.auth.getSession();
     
-    // If accessing a protected route and no session, redirect to login
-    if (req.nextUrl.pathname.startsWith('/profile')) {
-      if (!data.session) {
-        console.log('No session found, redirecting to sign-in');
-        return NextResponse.redirect(new URL('/auth/signin', req.url));
-      } else {
-        console.log('Session found for user:', data.session.user.email);
-        // User is authenticated, allow access to profile page
-        return res;
-      }
+    // If no session, redirect to login
+    if (!data.session) {
+      console.log('No session found, redirecting to sign-in');
+      return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
     
-    // For non-profile routes with a session
-    if (data.session) {
-      console.log('Session found for user:', data.session.user.email);
-    }
+    // User is authenticated, allow access
+    console.log('Session found for user:', data.session.user.email);
+    return res;
   } catch (error) {
     console.error('Error in middleware:', error);
+    // On error, redirect to sign-in as a fallback
+    return NextResponse.redirect(new URL('/auth/signin', req.url));
   }
-
-  return res;
 }
 
 // Specify which routes this middleware should run on

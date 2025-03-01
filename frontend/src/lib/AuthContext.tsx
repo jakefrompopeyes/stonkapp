@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { User, Session, Provider } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -23,6 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  // Function to update auth state
+  const updateAuthState = (newSession: Session | null) => {
+    setSession(newSession);
+    setUser(newSession?.user || null);
+    setIsAuthenticated(!!newSession);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     // Get initial session
@@ -33,17 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         console.log("[AUTH DEBUG] Initial session result:", session ? "Found" : "None", session?.user?.email);
         
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          console.log("[AUTH DEBUG] User authenticated:", session.user.email);
-        } else {
-          console.log("[AUTH DEBUG] No session found during initialization");
-        }
+        updateAuthState(session);
       } catch (error) {
         console.error('[AUTH DEBUG] Error getting initial session:', error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -56,19 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("[AUTH DEBUG] Auth state change event:", event);
         console.log("[AUTH DEBUG] New session:", session ? "Found" : "None", session?.user?.email);
         
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          console.log("[AUTH DEBUG] User authenticated after state change:", session.user.email);
-        } else {
-          setSession(null);
-          setUser(null);
-          setIsAuthenticated(false);
-          console.log("[AUTH DEBUG] User signed out after state change");
-        }
+        updateAuthState(session);
         
-        setIsLoading(false);
+        // Handle redirects on sign in/out
+        if (event === 'SIGNED_IN') {
+          console.log("User already signed in, redirecting to home");
+          router.push('/');
+        } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out, redirecting to home");
+          router.push('/');
+        }
       }
     );
 
@@ -76,33 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
       console.log("[AUTH DEBUG] Signing in user:", email);
       
-      // Use signInWithPassword with explicit session persistence
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password
-      });
-      
-      if (error) {
-        console.error("[AUTH DEBUG] Sign in error:", error);
-        throw error;
-      }
-      
-      // Explicitly set the user and session after successful sign-in
-      if (data && data.user) {
-        setUser(data.user);
-        setSession(data.session);
-        setIsAuthenticated(true);
-        console.log("[AUTH DEBUG] User signed in successfully:", data.user.email);
-      }
+      await supabase.auth.signInWithPassword({ email, password });
     } catch (error) {
-      console.error('[AUTH DEBUG] Error signing in:', error);
+      console.error("[AUTH DEBUG] Sign in error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -111,103 +93,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      setIsLoading(true);
       console.log("[AUTH DEBUG] Signing up user:", email);
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        console.error("[AUTH DEBUG] Sign up error:", error);
-        throw error;
-      }
-      console.log("[AUTH DEBUG] User signed up successfully");
+      
+      await supabase.auth.signUp({ email, password });
     } catch (error) {
-      console.error('[AUTH DEBUG] Error signing up:', error);
+      console.error("[AUTH DEBUG] Sign up error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      console.log('[AUTH DEBUG] Initiating Google OAuth sign-in...');
+      setIsLoading(true);
+      console.log("[AUTH DEBUG] Signing in with Google");
       
-      // Get the current URL origin for proper redirect
-      const origin = window.location.origin;
-      const redirectUrl = `${origin}/auth/callback`;
-      
-      console.log('[AUTH DEBUG] Using redirect URL:', redirectUrl);
-      
-      // Use direct redirect instead of a popup window
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-            scope: 'email profile',
-          },
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       
-      if (error) {
-        console.error('[AUTH DEBUG] Error initiating Google OAuth:', error);
-        throw error;
-      }
-      
-      if (!data.url) {
-        console.error('[AUTH DEBUG] No OAuth URL returned from Supabase');
-        throw new Error('Failed to get authentication URL');
-      }
-      
-      console.log('[AUTH DEBUG] OAuth URL received, redirecting to Google authentication...');
-      
-      // Instead of opening a popup, we'll redirect the current page
-      window.location.href = data.url;
-      
-      // Return a promise that resolves after a timeout
-      return new Promise((resolve) => {
-        setTimeout(resolve, 5000);
-      });
+      if (error) throw error;
+      return data;
     } catch (error) {
-      console.error('[AUTH DEBUG] Error in signInWithGoogle:', error);
+      console.error("[AUTH DEBUG] Google sign in error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       console.log("[AUTH DEBUG] Signing out user");
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("[AUTH DEBUG] Sign out error:", error);
-        throw error;
-      }
-      console.log("[AUTH DEBUG] User signed out successfully");
+      
+      await supabase.auth.signOut();
     } catch (error) {
-      console.error('[AUTH DEBUG] Error signing out:', error);
+      console.error("[AUTH DEBUG] Sign out error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const refreshUser = async () => {
     try {
-      setIsLoading(true);
-      console.log("[AUTH DEBUG] Refreshing user data");
+      console.log("[AUTH DEBUG] Refreshing user session");
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log("[AUTH DEBUG] Session found during refresh:", session.user.email);
-        setSession(session);
-        setUser(session.user);
-        setIsAuthenticated(true);
+        console.log("[AUTH DEBUG] Session refreshed successfully");
+        updateAuthState(session);
       } else {
         console.log("[AUTH DEBUG] No session found during refresh");
-        setSession(null);
-        setUser(null);
-        setIsAuthenticated(false);
+        updateAuthState(null);
       }
     } catch (error) {
-      console.error('[AUTH DEBUG] Error refreshing user data:', error);
-    } finally {
-      setIsLoading(false);
+      console.error("[AUTH DEBUG] Error refreshing user:", error);
+      updateAuthState(null);
     }
   };
 
@@ -226,10 +174,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}; 
