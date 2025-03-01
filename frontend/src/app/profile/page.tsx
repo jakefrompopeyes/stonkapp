@@ -2,24 +2,49 @@
 
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState<string[]>([]);
+  
+  // Add logging on component mount and updates
+  useEffect(() => {
+    console.log('[PROFILE] Component mounted or updated');
+    console.log('[PROFILE] Current user state:', user ? 'User exists' : 'No user');
+    if (user) {
+      console.log('[PROFILE] User ID:', user.id);
+      console.log('[PROFILE] User email:', user.email);
+      console.log('[PROFILE] User metadata:', JSON.stringify(user.user_metadata));
+    }
+  }, [user]);
 
   // Handle adding a comment
   const handleAddComment = () => {
     if (comment.trim()) {
+      console.log('[PROFILE] Adding comment:', comment);
       setComments([...comments, comment]);
       setComment('');
     }
   };
 
+  // Handle sign out
+  const handleSignOut = async () => {
+    console.log('[PROFILE] Sign out initiated');
+    try {
+      await signOut();
+      console.log('[PROFILE] Sign out successful, redirecting to home');
+      router.push('/');
+    } catch (error) {
+      console.error('[PROFILE] Sign out error:', error);
+    }
+  };
+
   // Simple loading state while we wait for auth to initialize
   if (user === null) {
+    console.log('[PROFILE] Rendering loading state (user is null)');
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -27,6 +52,8 @@ export default function ProfilePage() {
     );
   }
 
+  console.log('[PROFILE] Rendering profile page with user data');
+  
   // Get user information
   const email = user?.email || 'No email available';
   const name = user?.user_metadata?.full_name || user?.user_metadata?.name || email;
@@ -43,14 +70,27 @@ export default function ProfilePage() {
         <p className="mb-4"><span className="font-medium">Account ID:</span> {userId}</p>
         
         <button
-          onClick={() => {
-            signOut();
-            router.push('/');
-          }}
+          onClick={handleSignOut}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
         >
           Sign Out
         </button>
+      </div>
+      
+      {/* Debug Information */}
+      <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg mb-6 overflow-auto max-h-60">
+        <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
+        <pre className="text-xs whitespace-pre-wrap">
+          {JSON.stringify({
+            userId: user?.id,
+            email: user?.email,
+            aud: user?.aud,
+            created_at: user?.created_at,
+            last_sign_in_at: user?.last_sign_in_at,
+            app_metadata: user?.app_metadata,
+            user_metadata: user?.user_metadata,
+          }, null, 2)}
+        </pre>
       </div>
       
       {/* Comments Section */}

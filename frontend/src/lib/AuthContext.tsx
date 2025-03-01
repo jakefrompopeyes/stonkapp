@@ -28,10 +28,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to update auth state
   const updateAuthState = (newSession: Session | null) => {
+    console.log('[AUTH] Updating auth state:', newSession ? 'Session exists' : 'No session');
+    
+    if (newSession) {
+      console.log('[AUTH] User ID:', newSession.user.id);
+      if (newSession.expires_at) {
+        console.log('[AUTH] Session expires at:', new Date(newSession.expires_at * 1000).toISOString());
+      }
+    }
+    
     setSession(newSession);
     setUser(newSession?.user || null);
     setIsAuthenticated(!!newSession);
     setIsLoading(false);
+    
+    console.log('[AUTH] Auth state updated. User:', newSession?.user ? 'exists' : 'null');
   };
 
   useEffect(() => {
@@ -39,13 +50,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
-        console.log("[AUTH DEBUG] Getting initial session...");
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("[AUTH DEBUG] Initial session result:", session ? "Found" : "None", session?.user?.email);
+        console.log("[AUTH] Getting initial session...");
+        
+        // Check for cookies
+        const allCookies = document.cookie;
+        console.log("[AUTH] Cookies present:", allCookies ? 'Yes' : 'No');
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[AUTH] Error getting initial session:", error);
+          updateAuthState(null);
+          return;
+        }
+        
+        console.log("[AUTH] Initial session result:", session ? "Found" : "None");
+        if (session) {
+          console.log("[AUTH] Session user email:", session.user.email);
+          if (session.expires_at) {
+            console.log("[AUTH] Session expires at:", new Date(session.expires_at * 1000).toISOString());
+          }
+        }
         
         updateAuthState(session);
       } catch (error) {
-        console.error('[AUTH DEBUG] Error getting initial session:', error);
+        console.error('[AUTH] Error getting initial session:', error);
         setIsLoading(false);
       }
     };
@@ -55,17 +84,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("[AUTH DEBUG] Auth state change event:", event);
-        console.log("[AUTH DEBUG] New session:", session ? "Found" : "None", session?.user?.email);
+        console.log("[AUTH] Auth state change event:", event);
+        console.log("[AUTH] New session:", session ? "Found" : "None");
+        
+        if (session) {
+          console.log("[AUTH] Session user email:", session.user.email);
+          if (session.expires_at) {
+            console.log("[AUTH] Session expires at:", new Date(session.expires_at * 1000).toISOString());
+          }
+        }
         
         updateAuthState(session);
         
         // Handle redirects on sign in/out
         if (event === 'SIGNED_IN') {
-          console.log("User already signed in, redirecting to home");
+          console.log("[AUTH] User signed in, redirecting to home");
           router.push('/');
         } else if (event === 'SIGNED_OUT') {
-          console.log("User signed out, redirecting to home");
+          console.log("[AUTH] User signed out, redirecting to home");
           router.push('/');
         }
       }
@@ -73,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Cleanup subscription
     return () => {
+      console.log("[AUTH] Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [router]);
@@ -80,11 +117,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log("[AUTH DEBUG] Signing in user:", email);
+      console.log("[AUTH] Signing in user:", email);
       
-      await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        console.error("[AUTH] Sign in error:", error);
+        throw error;
+      }
+      
+      console.log("[AUTH] Sign in successful:", data.user?.email);
+      return;
     } catch (error) {
-      console.error("[AUTH DEBUG] Sign in error:", error);
+      console.error("[AUTH] Sign in error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -94,11 +139,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log("[AUTH DEBUG] Signing up user:", email);
+      console.log("[AUTH] Signing up user:", email);
       
-      await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      if (error) {
+        console.error("[AUTH] Sign up error:", error);
+        throw error;
+      }
+      
+      console.log("[AUTH] Sign up successful:", data.user?.email);
     } catch (error) {
-      console.error("[AUTH DEBUG] Sign up error:", error);
+      console.error("[AUTH] Sign up error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -108,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
-      console.log("[AUTH DEBUG] Signing in with Google");
+      console.log("[AUTH] Signing in with Google");
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -117,10 +169,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("[AUTH] Google sign in error:", error);
+        throw error;
+      }
+      
+      console.log("[AUTH] Google sign in initiated, redirect URL:", data.url);
       return data;
     } catch (error) {
-      console.error("[AUTH DEBUG] Google sign in error:", error);
+      console.error("[AUTH] Google sign in error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -130,11 +187,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      console.log("[AUTH DEBUG] Signing out user");
+      console.log("[AUTH] Signing out user");
       
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("[AUTH] Sign out error:", error);
+        throw error;
+      }
+      
+      console.log("[AUTH] Sign out successful");
     } catch (error) {
-      console.error("[AUTH DEBUG] Sign out error:", error);
+      console.error("[AUTH] Sign out error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -143,18 +207,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      console.log("[AUTH DEBUG] Refreshing user session");
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log("[AUTH] Refreshing user session");
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("[AUTH] Error refreshing session:", error);
+        updateAuthState(null);
+        return;
+      }
       
       if (session) {
-        console.log("[AUTH DEBUG] Session refreshed successfully");
+        console.log("[AUTH] Session refreshed successfully for user:", session.user.email);
         updateAuthState(session);
       } else {
-        console.log("[AUTH DEBUG] No session found during refresh");
+        console.log("[AUTH] No session found during refresh");
         updateAuthState(null);
       }
     } catch (error) {
-      console.error("[AUTH DEBUG] Error refreshing user:", error);
+      console.error("[AUTH] Error refreshing user:", error);
       updateAuthState(null);
     }
   };
