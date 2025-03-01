@@ -40,11 +40,18 @@ export async function middleware(req: NextRequest) {
     const { data } = await supabase.auth.getSession();
     
     // If accessing a protected route and no session, redirect to login
-    if (req.nextUrl.pathname.startsWith('/profile') && !data.session) {
-      console.log('No session found, redirecting to sign-in');
-      return NextResponse.redirect(new URL('/auth/signin', req.url));
+    if (req.nextUrl.pathname.startsWith('/profile')) {
+      if (!data.session) {
+        console.log('No session found, redirecting to sign-in');
+        return NextResponse.redirect(new URL('/auth/signin', req.url));
+      } else {
+        console.log('Session found for user:', data.session.user.email);
+        // User is authenticated, allow access to profile page
+        return res;
+      }
     }
     
+    // For non-profile routes with a session
     if (data.session) {
       console.log('Session found for user:', data.session.user.email);
     }
