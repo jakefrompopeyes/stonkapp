@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   description: 'Track and manage your investments',
   icons: {
     icon: '/favicon.ico',
-    apple: '/images/apple-icon.png',
+    apple: '/images/apple-touch-icon.png',
+    shortcut: '/images/favicon-32x32.png',
   },
 }
 
