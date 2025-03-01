@@ -48,35 +48,63 @@ function SignInContent() {
       // Show a message to the user that they'll be redirected
       setError('Redirecting to Google authentication. Please wait...');
       
+      // Check if there's a previous authentication attempt that might have frozen
+      if (typeof window !== 'undefined') {
+        const lastAuthAttempt = localStorage.getItem('google_auth_started');
+        if (lastAuthAttempt) {
+          const timeSinceLastAttempt = Date.now() - parseInt(lastAuthAttempt);
+          // If last attempt was less than 2 minutes ago, it might have frozen
+          if (timeSinceLastAttempt < 120000) {
+            console.log('[DEBUG] Detected potential frozen auth attempt from', new Date(parseInt(lastAuthAttempt)).toISOString());
+            // Clear the timestamp to allow a new attempt
+            localStorage.removeItem('google_auth_started');
+          }
+        }
+      }
+      
       try {
-        // This will redirect the page, so we won't actually return from this function
-        await signInWithGoogle();
+        // This will redirect the page
+        const result = await signInWithGoogle();
+        console.log('[DEBUG] Sign in with Google returned:', result ? 'has data' : 'no data', new Date().toISOString());
         
-        // If we get here, something went wrong with the redirect
-        console.log('[DEBUG] Redirect didn\'t happen as expected', new Date().toISOString());
-        setError('The redirect to Google authentication didn\'t happen as expected. Please try again.');
-        setIsLoading(false);
+        // Set a timeout to detect if the redirect doesn't happen
+        // This code should only run if the redirect fails
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && document.visibilityState !== 'hidden') {
+            console.log('[DEBUG] Redirect timeout reached - redirect may have failed', new Date().toISOString());
+            setIsLoading(false);
+            setError('The redirect to Google authentication failed. Please try again.');
+            // Clear any stored auth attempt
+            localStorage.removeItem('google_auth_started');
+          }
+        }, 5000);
       } catch (error: any) {
         console.error('[DEBUG] Google sign-in error:', error, new Date().toISOString());
         
         // Provide a more helpful error message based on the error
         if (error.message?.includes('Failed to get authentication URL')) {
           setError('Unable to connect to the authentication service. Please try again later.');
+        } else if (error.message?.includes('popup')) {
+          setError('The authentication popup was blocked. Please allow popups for this site and try again.');
         } else {
           setError(error.message || 'Failed to sign in with Google. Please try again.');
         }
         setIsLoading(false);
+        
+        // Clear any stored auth attempt
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('google_auth_started');
+        }
       }
-      
-      // Set a timeout to reset the loading state if the redirect doesn't happen
-      setTimeout(() => {
-        setIsLoading(false);
-        setError('The redirect to Google authentication is taking longer than expected. Please try again.');
-      }, 10000);
     } catch (error: any) {
       console.error('[DEBUG] Unexpected error during Google sign-in:', error, new Date().toISOString());
       setError(error.message || 'An unexpected error occurred. Please try again.');
       setIsLoading(false);
+      
+      // Clear any stored auth attempt
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('google_auth_started');
+      }
     }
   };
 

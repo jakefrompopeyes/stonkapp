@@ -76,28 +76,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('[DEBUG] Initiating Google OAuth sign-in with direct redirect...', new Date().toISOString());
+      console.log('[DEBUG] Initiating Google OAuth sign-in...', new Date().toISOString());
       
       // Get the current URL origin for proper redirect
-      const origin = window.location.origin;
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const redirectUrl = `${origin}/auth/callback`;
       
       console.log('[DEBUG] Using redirect URL:', redirectUrl);
       
-      // Use direct redirect instead of a popup window
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          // Important: Do NOT add any additional query parameters to the redirectTo URL
           queryParams: {
             // Force consent screen to show every time
             prompt: 'consent',
-            // Ensure we get a fresh authentication
+            // Request offline access to get refresh token
             access_type: 'offline',
             // Include email scope explicitly
             scope: 'email profile',
+            // Add a parameter to help with Vercel's edge functions
+            hd: 'domain.com', // Optional: restrict to specific domain
           },
+          // Skip browser redirect in client - we'll handle it manually
+          skipBrowserRedirect: true,
         },
       });
       
@@ -111,17 +113,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Failed to get authentication URL');
       }
       
-      console.log('[DEBUG] OAuth URL received, redirecting to Google authentication...', data.url, new Date().toISOString());
+      console.log('[DEBUG] OAuth URL received:', data.url.substring(0, 100) + '...', new Date().toISOString());
       
-      // Instead of opening a popup, we'll redirect the current page
-      // No setTimeout here - direct redirect is more reliable
-      window.location.href = data.url;
+      // Store a timestamp in localStorage to detect freezes
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('google_auth_started', Date.now().toString());
+      }
       
-      // Return a promise that resolves after a timeout
-      // This is just to keep the UI in loading state until the redirect happens
-      return new Promise((resolve) => {
-        setTimeout(resolve, 5000);
-      });
+      // Redirect to the OAuth URL
+      if (typeof window !== 'undefined') {
+        window.location.href = data.url;
+      }
+      
+      // Return the data for any further processing
+      return data;
     } catch (error) {
       console.error('[DEBUG] Error in signInWithGoogle:', error, new Date().toISOString());
       throw error;
