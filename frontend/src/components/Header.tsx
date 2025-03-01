@@ -28,9 +28,6 @@ export default function Header() {
             <Link href="/" className="hover:text-blue-300">
               Home
             </Link>
-            <Link href="/stock" className="hover:text-blue-300">
-              Stocks
-            </Link>
             <Link href="/stocks" className="hover:text-blue-300">
               Watchlist
             </Link>
@@ -128,13 +125,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Home
-            </Link>
-            <Link 
-              href="/stock" 
-              className="block py-2 hover:text-blue-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Stocks
             </Link>
             <Link 
               href="/stocks" 
