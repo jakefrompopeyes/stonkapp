@@ -107,13 +107,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Failed to get authentication URL');
       }
       
-      console.log('[DEBUG] OAuth URL received, redirecting to Google authentication...', new Date().toISOString());
+      console.log('[DEBUG] OAuth URL received, redirecting to Google authentication...', data.url, new Date().toISOString());
       
-      // Instead of opening a popup, we'll redirect the current page
-      window.location.href = data.url;
+      // Add a small delay before redirecting to ensure logs are sent
+      setTimeout(() => {
+        // Instead of opening a popup, we'll redirect the current page
+        window.location.href = data.url;
+        console.log('[DEBUG] Redirect initiated', new Date().toISOString());
+      }, 100);
       
-      // Return a promise that never resolves since we're redirecting away
-      return new Promise(() => {});
+      // Return a promise that resolves after a timeout
+      // This is just to keep the UI in loading state until the redirect happens
+      return new Promise((resolve) => {
+        setTimeout(resolve, 5000);
+      });
     } catch (error) {
       console.error('[DEBUG] Error in signInWithGoogle:', error, new Date().toISOString());
       throw error;

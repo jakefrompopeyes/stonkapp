@@ -46,14 +46,16 @@ function SignInContent() {
       console.log('[DEBUG] Starting Google sign-in from button click', new Date().toISOString());
       
       // Show a message to the user that they'll be redirected
-      setError('Redirecting to Google authentication...');
+      setError('Redirecting to Google authentication. Please wait...');
       
       try {
         // This will redirect the page, so we won't actually return from this function
         await signInWithGoogle();
         
-        // The code below won't execute due to the redirect, but we include it for completeness
-        console.log('[DEBUG] This code should not execute due to redirect', new Date().toISOString());
+        // If we get here, something went wrong with the redirect
+        console.log('[DEBUG] Redirect didn\'t happen as expected', new Date().toISOString());
+        setError('The redirect to Google authentication didn\'t happen as expected. Please try again.');
+        setIsLoading(false);
       } catch (error: any) {
         console.error('[DEBUG] Google sign-in error:', error, new Date().toISOString());
         
@@ -65,6 +67,12 @@ function SignInContent() {
         }
         setIsLoading(false);
       }
+      
+      // Set a timeout to reset the loading state if the redirect doesn't happen
+      setTimeout(() => {
+        setIsLoading(false);
+        setError('The redirect to Google authentication is taking longer than expected. Please try again.');
+      }, 10000);
     } catch (error: any) {
       console.error('[DEBUG] Unexpected error during Google sign-in:', error, new Date().toISOString());
       setError(error.message || 'An unexpected error occurred. Please try again.');
