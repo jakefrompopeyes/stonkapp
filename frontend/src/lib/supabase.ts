@@ -15,24 +15,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    // Use localStorage for session persistence in the browser
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce', // Use PKCE flow for more secure authentication
-  },
-  // Set global fetch options to ensure cookies are sent with requests
-  global: {
-    fetch: (url: RequestInfo | URL, options?: RequestInit) => {
-      const fetchOptions: RequestInit = {
-        ...options,
-        credentials: 'include', // Always include credentials (cookies) with requests
-      };
-      return fetch(url, fetchOptions);
-    },
-    headers: {
-      'X-Client-Info': 'supabase-js-v2',
-    },
   },
 });
 
