@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-export default function SignInPage() {
+// Create a client component that uses useSearchParams
+function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -189,5 +190,23 @@ export default function SignInPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+// Loading fallback for the suspense boundary
+function SignInLoading() {
+  return (
+    <div className="max-w-md mx-auto py-12 px-4 flex justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
+}
+
+// Main page component with suspense boundary
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInLoading />}>
+      <SignInForm />
+    </Suspense>
   );
 } 
