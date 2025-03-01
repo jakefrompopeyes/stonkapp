@@ -11,6 +11,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Get the current domain for cookie settings
+const domain = typeof window !== 'undefined' ? window.location.hostname : undefined;
+
 // Create a single supabase client for interacting with your database
 // Configure with localStorage for session persistence
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -22,11 +25,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce', // Use PKCE flow for more secure authentication
+    // cookieOptions property is not supported in this version of Supabase
   },
   // Set global fetch options to ensure cookies are sent with requests
   global: {
     fetch: (url: RequestInfo | URL, options?: RequestInit) => {
-      return fetch(url, options);
+      const fetchOptions: RequestInit = {
+        ...options,
+        credentials: 'include', // Always include credentials (cookies) with requests
+      };
+      return fetch(url, fetchOptions);
     },
     headers: {
       'X-Client-Info': 'supabase-js-v2',
