@@ -29,16 +29,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
+        console.log("[AUTH DEBUG] Getting initial session...");
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial auth session:", session ? "Found" : "None", session?.user?.email);
+        console.log("[AUTH DEBUG] Initial session result:", session ? "Found" : "None", session?.user?.email);
         
         if (session) {
           setSession(session);
           setUser(session.user);
           setIsAuthenticated(true);
+          console.log("[AUTH DEBUG] User authenticated:", session.user.email);
+        } else {
+          console.log("[AUTH DEBUG] No session found during initialization");
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('[AUTH DEBUG] Error getting initial session:', error);
       } finally {
         setIsLoading(false);
       }
@@ -49,16 +53,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state change:", event, session?.user?.email);
+        console.log("[AUTH DEBUG] Auth state change event:", event);
+        console.log("[AUTH DEBUG] New session:", session ? "Found" : "None", session?.user?.email);
         
         if (session) {
           setSession(session);
           setUser(session.user);
           setIsAuthenticated(true);
+          console.log("[AUTH DEBUG] User authenticated after state change:", session.user.email);
         } else {
           setSession(null);
           setUser(null);
           setIsAuthenticated(false);
+          console.log("[AUTH DEBUG] User signed out after state change");
         }
         
         setIsLoading(false);
@@ -74,23 +81,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log("[AUTH DEBUG] Signing in user:", email);
+      
       // Use signInWithPassword with explicit session persistence
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("[AUTH DEBUG] Sign in error:", error);
+        throw error;
+      }
       
       // Explicitly set the user and session after successful sign-in
       if (data && data.user) {
         setUser(data.user);
         setSession(data.session);
         setIsAuthenticated(true);
-        console.log("User signed in successfully:", data.user.email);
+        console.log("[AUTH DEBUG] User signed in successfully:", data.user.email);
       }
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('[AUTH DEBUG] Error signing in:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -99,74 +111,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      console.log("[AUTH DEBUG] Signing up user:", email);
       const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
+      if (error) {
+        console.error("[AUTH DEBUG] Sign up error:", error);
+        throw error;
+      }
+      console.log("[AUTH DEBUG] User signed up successfully");
     } catch (error) {
-      console.error('Error signing up:', error);
+      console.error('[AUTH DEBUG] Error signing up:', error);
       throw error;
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      console.log('[DEBUG] Initiating Google OAuth sign-in with direct redirect...', new Date().toISOString());
+      console.log('[AUTH DEBUG] Initiating Google OAuth sign-in...');
       
       // Get the current URL origin for proper redirect
       const origin = window.location.origin;
       const redirectUrl = `${origin}/auth/callback`;
       
-      console.log('[DEBUG] Using redirect URL:', redirectUrl);
+      console.log('[AUTH DEBUG] Using redirect URL:', redirectUrl);
       
       // Use direct redirect instead of a popup window
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          // Important: Do NOT add any additional query parameters to the redirectTo URL
           queryParams: {
-            // Show account selection screen every time
             prompt: 'select_account',
-            // Ensure we get a fresh authentication
             access_type: 'offline',
-            // Include email scope explicitly
             scope: 'email profile',
           },
         },
       });
       
       if (error) {
-        console.error('[DEBUG] Error initiating Google OAuth:', error);
+        console.error('[AUTH DEBUG] Error initiating Google OAuth:', error);
         throw error;
       }
       
       if (!data.url) {
-        console.error('[DEBUG] No OAuth URL returned from Supabase');
+        console.error('[AUTH DEBUG] No OAuth URL returned from Supabase');
         throw new Error('Failed to get authentication URL');
       }
       
-      console.log('[DEBUG] OAuth URL received, redirecting to Google authentication...', data.url, new Date().toISOString());
+      console.log('[AUTH DEBUG] OAuth URL received, redirecting to Google authentication...');
       
       // Instead of opening a popup, we'll redirect the current page
-      // No setTimeout here - direct redirect is more reliable
       window.location.href = data.url;
       
       // Return a promise that resolves after a timeout
-      // This is just to keep the UI in loading state until the redirect happens
       return new Promise((resolve) => {
         setTimeout(resolve, 5000);
       });
     } catch (error) {
-      console.error('[DEBUG] Error in signInWithGoogle:', error, new Date().toISOString());
+      console.error('[AUTH DEBUG] Error in signInWithGoogle:', error);
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
+      console.log("[AUTH DEBUG] Signing out user");
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("[AUTH DEBUG] Sign out error:", error);
+        throw error;
+      }
+      console.log("[AUTH DEBUG] User signed out successfully");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('[AUTH DEBUG] Error signing out:', error);
       throw error;
     }
   };
@@ -174,11 +190,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       setIsLoading(true);
+      console.log("[AUTH DEBUG] Refreshing user data");
       const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      
+      if (session) {
+        console.log("[AUTH DEBUG] Session found during refresh:", session.user.email);
+        setSession(session);
+        setUser(session.user);
+        setIsAuthenticated(true);
+      } else {
+        console.log("[AUTH DEBUG] No session found during refresh");
+        setSession(null);
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } catch (error) {
-      console.error('Error refreshing user data:', error);
+      console.error('[AUTH DEBUG] Error refreshing user data:', error);
     } finally {
       setIsLoading(false);
     }
