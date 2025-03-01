@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
+  // Log the request URL for debugging
+  console.log(`Middleware processing request for: ${req.nextUrl.pathname}`);
+  
   // Create a response to modify
   const res = NextResponse.next();
   
@@ -13,9 +16,14 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          return req.cookies.get(name)?.value;
+          const cookie = req.cookies.get(name);
+          if (cookie) {
+            console.log(`Found cookie ${name} in request`);
+          }
+          return cookie?.value;
         },
         set(name: string, value: string, options: any) {
+          console.log(`Setting cookie ${name} in response`);
           res.cookies.set({
             name,
             value,
@@ -23,6 +31,7 @@ export async function middleware(req: NextRequest) {
           });
         },
         remove(name: string, options: any) {
+          console.log(`Removing cookie ${name} from response`);
           res.cookies.set({
             name,
             value: '',
@@ -33,21 +42,34 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Refresh the session if it exists
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  try {
+    // Refresh the session if it exists
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  // If accessing the profile page and no session, redirect to login
-  if (req.nextUrl.pathname.startsWith('/profile') && !session) {
-    console.log('No session found, redirecting to sign-in');
-    const redirectUrl = new URL('/auth/signin', req.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+    // If accessing a protected route and no session, redirect to login
+    if (req.nextUrl.pathname.startsWith('/profile') && !session) {
+      console.log('No session found, redirecting to sign-in');
+      
+      // Create the redirect URL with the original URL as a redirect parameter
+      const redirectUrl = new URL('/auth/signin', req.url);
+      redirectUrl.searchParams.set('redirect', req.nextUrl.pathname);
+      
+      return NextResponse.redirect(redirectUrl);
+    }
 
-  // If we have a session, add user info to request headers for debugging
-  if (session) {
-    console.log('Session found for user:', session.user.email);
+    // If we have a session, add user info to request headers for debugging
+    if (session) {
+      console.log('Session found for user:', session.user.email);
+      
+      // Add user info to headers for server components
+      res.headers.set('x-user-email', session.user.email || '');
+      res.headers.set('x-user-id', session.user.id || '');
+      res.headers.set('x-user-role', session.user.role || 'authenticated');
+    }
+  } catch (error) {
+    console.error('Error in middleware:', error);
   }
 
   // For all other routes, continue

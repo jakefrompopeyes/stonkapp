@@ -2,11 +2,21 @@
 
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function ProfilePage() {
-  const { user } = useAuth();
+// Loading component for the Suspense boundary
+function ProfileLoading() {
+  return (
+    <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
+}
+
+// Main profile component that handles authentication and data fetching
+function ProfileContent() {
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const router = useRouter();
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
@@ -16,29 +26,42 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simplified authentication check - middleware will handle redirects if not authenticated
+  // Enhanced session check that works with the middleware
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // Check for a session directly
-        const { data } = await supabase.auth.getSession();
+        console.log("Checking session in profile page...");
         
-        if (!data.session) {
-          console.log("No session found in profile page");
-          router.push('/auth/signin');
+        // First try to get user from context
+        if (isAuthenticated && user) {
+          console.log("User found in auth context:", user.email);
+          setIsLoading(false);
           return;
         }
         
-        console.log("Session found in profile page:", data.session.user.email);
+        // If not in context, try to refresh user data
+        await refreshUser();
+        
+        // As a fallback, check for a session directly
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          console.log("Session found via direct check:", data.session.user.email);
+          setIsLoading(false);
+        } else {
+          console.log("No session found, redirecting to sign-in");
+          router.push('/auth/signin');
+        }
       } catch (error) {
         console.error("Error checking session:", error);
+        router.push('/auth/signin');
       } finally {
         setIsLoading(false);
       }
     };
     
     checkSession();
-  }, [router]);
+  }, [user, isAuthenticated, refreshUser, router]);
 
   // Fetch user's subscription data when we have a user
   useEffect(() => {
@@ -113,11 +136,7 @@ export default function ProfilePage() {
 
   // Show loading state while checking authentication
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <ProfileLoading />;
   }
 
   // If we have a user, show the profile page
@@ -320,9 +339,14 @@ export default function ProfilePage() {
   router.push('/auth/signin');
   
   // Show loading while redirect happens
+  return <ProfileLoading />;
+}
+
+// Main page component with suspense boundary
+export default function ProfilePage() {
   return (
-    <div className="flex justify-center items-center min-h-[60vh]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-    </div>
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileContent />
+    </Suspense>
   );
 } 

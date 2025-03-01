@@ -11,21 +11,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Get the current domain for cookie settings
-const domain = typeof window !== 'undefined' ? window.location.hostname : undefined;
-
 // Create a single supabase client for interacting with your database
-// Configure with localStorage for session persistence
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    // Explicitly use localStorage for session persistence
-    // This ensures the session is saved between page refreshes and browser restarts
+    // Use localStorage for session persistence in the browser
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce', // Use PKCE flow for more secure authentication
-    // cookieOptions property is not supported in this version of Supabase
   },
   // Set global fetch options to ensure cookies are sent with requests
   global: {
@@ -40,4 +34,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       'X-Client-Info': 'supabase-js-v2',
     },
   },
-}); 
+});
+
+// Helper function to check if we have a valid session
+export const getSession = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error getting session:', error);
+      return null;
+    }
+    return data.session;
+  } catch (error) {
+    console.error('Exception getting session:', error);
+    return null;
+  }
+}; 
