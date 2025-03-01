@@ -85,12 +85,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo: `${window.location.origin}/auth/callback?popup=true&t=${Date.now()}`, // Add timestamp to prevent caching
           skipBrowserRedirect: true, // Don't redirect the current page, we'll handle the popup ourselves
           queryParams: {
-            // Force consent screen to show every time
-            prompt: 'consent',
+            // Force consent screen to show every time and use select_account to allow user to choose account
+            prompt: 'consent select_account',
             // Ensure we get a fresh authentication
             access_type: 'offline',
             // Include email scope explicitly
             scope: 'email profile',
+            // Add additional parameters to prevent caching issues
+            include_granted_scopes: 'true',
           },
         },
       });
@@ -114,10 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const left = window.innerWidth / 2 - width / 2;
       const top = window.innerHeight / 2 - height / 2;
       
+      // Add additional window features to ensure the popup works correctly
       const popup = window.open(
         data.url,
         'google-oauth',
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,location=yes,menubar=no,toolbar=no`
       );
       
       if (!popup) {
@@ -194,6 +197,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 reject(new Error('Authentication was cancelled or failed'));
               }
             });
+          }
+          
+          // Try to detect if the popup is stuck at the consent screen
+          try {
+            if (popup && !popup.closed) {
+              // Check if we can access the popup location
+              // This will throw an error if the popup is on a different domain (like Google's consent screen)
+              // But it's useful to detect when we're back on our domain
+              const popupUrl = popup.location.href;
+              
+              // If we can access the URL and it contains our callback route, but the popup hasn't closed yet
+              if (popupUrl && popupUrl.includes('/auth/callback')) {
+                console.log('[DEBUG] Detected callback URL in popup but popup hasn\'t closed:', popupUrl, new Date().toISOString());
+                
+                // Give it a moment to process, then close it if it's still open
+                setTimeout(() => {
+                  if (popup && !popup.closed) {
+                    console.log('[DEBUG] Closing popup manually after detecting callback URL', new Date().toISOString());
+                    popup.close();
+                  }
+                }, 3000);
+              }
+            }
+          } catch (e) {
+            // This error is expected when the popup is on the Google domain
+            // We can't access the location due to cross-origin restrictions
           }
         }, 500);
         

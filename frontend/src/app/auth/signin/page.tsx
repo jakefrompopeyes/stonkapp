@@ -61,9 +61,15 @@ function SignInContent() {
         }, 15000);
       }, 8000); // 8 seconds should be enough time to detect if we're stuck at the consent screen
       
+      // Create a variable to track if we've already handled the sign-in completion
+      let signInHandled = false;
+      
       try {
         const result = await signInWithGoogle();
         console.log('[DEBUG] Sign-in with Google result:', result, new Date().toISOString());
+        
+        // Mark that we've handled the sign-in
+        signInHandled = true;
         
         // Clear the consent screen timeout
         clearTimeout(consentScreenTimeoutId);
@@ -72,6 +78,9 @@ function SignInContent() {
         setError(null);
         router.push('/profile');
       } catch (error: any) {
+        // Mark that we've handled the sign-in
+        signInHandled = true;
+        
         // Clear the consent screen timeout
         clearTimeout(consentScreenTimeoutId);
         
@@ -90,6 +99,16 @@ function SignInContent() {
           setError(error.message || 'Failed to sign in with Google. Please try again.');
         }
       }
+      
+      // Set a final timeout to reset the UI if the sign-in process hasn't completed
+      // This handles the case where the popup is stuck and neither resolves nor rejects
+      setTimeout(() => {
+        if (!signInHandled) {
+          console.log('[DEBUG] Sign-in process never completed, resetting UI', new Date().toISOString());
+          setError('The sign-in process did not complete. This might be due to the Google consent screen freezing. Please try again and make sure to click "Continue" on the Google consent screen.');
+          setIsLoading(false);
+        }
+      }, 90000); // 90 seconds should be enough time for the entire process
     } catch (error: any) {
       console.error('[DEBUG] Unexpected error during Google sign-in:', error, new Date().toISOString());
       setError(error.message || 'An unexpected error occurred. Please try again.');

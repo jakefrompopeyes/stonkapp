@@ -211,11 +211,20 @@ export async function GET(request: NextRequest) {
                 
                 // Also try again after a short delay as a backup
                 setTimeout(sendSuccessToParent, 500);
+                
+                // Force close the window after a longer timeout as a last resort
+                setTimeout(() => {
+                  console.log('[DEBUG] Force closing popup window after timeout');
+                  window.close();
+                }, 5000);
               </script>
             </head>
             <body>
               <p>Authentication successful! This window should close automatically.</p>
               <p>If it doesn't close, you can close it manually and return to the application.</p>
+              <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Close Window
+              </button>
             </body>
           </html>
           `,
