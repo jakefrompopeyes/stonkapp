@@ -8,7 +8,7 @@ import FeedbackButton from '@/components/FeedbackButton'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'StonkApp',
+  title: 'StonkScan',
   description: 'Track and manage your investments',
   icons: {
     icon: '/favicon.ico',

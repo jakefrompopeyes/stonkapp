@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('StonkApp API is running');
+  res.send('StonkScan API is running');
 });
 
 // API routes

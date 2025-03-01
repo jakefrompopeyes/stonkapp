@@ -31,7 +31,7 @@ export default function Home() {
     <div className="max-w-4xl mx-auto mt-8">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          Welcome to StonkApp
+          Welcome to StonkScan
         </h1>
         <p className="text-gray-600 mb-8">
           Search for public stocks to view detailed information, historical prices, and more.
