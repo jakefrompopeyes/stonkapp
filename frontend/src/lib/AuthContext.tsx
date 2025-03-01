@@ -96,9 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         updateAuthState(session);
         
-        // Handle redirects on sign in/out
-        if (event === 'SIGNED_IN') {
-          console.log("[AUTH] User signed in, redirecting to home");
+        // Only redirect on explicit sign-in/sign-out actions, not on initial load or refresh
+        if (event === 'SIGNED_IN' && window.location.pathname.includes('/auth/')) {
+          console.log("[AUTH] User signed in from auth page, redirecting to home");
           router.push('/');
         } else if (event === 'SIGNED_OUT') {
           console.log("[AUTH] User signed out, redirecting to home");
