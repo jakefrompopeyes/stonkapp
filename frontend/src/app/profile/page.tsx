@@ -32,8 +32,23 @@ export default function ProfilePage() {
       try {
         // First check if we already have a user in context
         if (auth.user) {
-          const userEmail = (auth.user as User).email || 'unknown';
-          addDebugLog(`User found in context: ${userEmail}`);
+          // Log all available user information for debugging
+          const typedUser = auth.user as User;
+          const userInfo = {
+            id: typedUser.id,
+            email: typedUser.email,
+            app_metadata: typedUser.app_metadata,
+            user_metadata: typedUser.user_metadata,
+            identities: typedUser.identities,
+            provider: typedUser.app_metadata?.provider
+          };
+          
+          addDebugLog(`User found in context: ${JSON.stringify(userInfo, null, 2)}`);
+          
+          // Get user identifier - could be email or name from Google auth
+          const userIdentifier = getUserIdentifier(typedUser);
+          addDebugLog(`User identifier: ${userIdentifier}`);
+          
           setIsLoading(false);
           return;
         }
@@ -44,8 +59,23 @@ export default function ProfilePage() {
         
         // Check again after refresh
         if (auth.user) {
-          const userEmail = (auth.user as User).email || 'unknown';
-          addDebugLog(`User found after refresh: ${userEmail}`);
+          // Log all available user information for debugging
+          const typedUser = auth.user as User;
+          const userInfo = {
+            id: typedUser.id,
+            email: typedUser.email,
+            app_metadata: typedUser.app_metadata,
+            user_metadata: typedUser.user_metadata,
+            identities: typedUser.identities,
+            provider: typedUser.app_metadata?.provider
+          };
+          
+          addDebugLog(`User found after refresh: ${JSON.stringify(userInfo, null, 2)}`);
+          
+          // Get user identifier - could be email or name from Google auth
+          const userIdentifier = getUserIdentifier(typedUser);
+          addDebugLog(`User identifier after refresh: ${userIdentifier}`);
+          
           setIsLoading(false);
         } else {
           // Only redirect if we're sure there's no user
@@ -60,6 +90,43 @@ export default function ProfilePage() {
     
     checkAuth();
   }, [auth]);
+
+  // Helper function to get user identifier from different auth providers
+  const getUserIdentifier = (user: User): string => {
+    // Try email first (works for email auth)
+    if (user.email) {
+      return user.email;
+    }
+    
+    // Try user_metadata for Google auth
+    if (user.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    
+    if (user.user_metadata?.name) {
+      return user.user_metadata.name;
+    }
+    
+    if (user.user_metadata?.email) {
+      return user.user_metadata.email;
+    }
+    
+    // Try identities for OAuth providers
+    if (user.identities && user.identities.length > 0) {
+      const googleIdentity = user.identities.find(identity => 
+        identity.provider === 'google'
+      );
+      
+      if (googleIdentity?.identity_data) {
+        return googleIdentity.identity_data.email || 
+               googleIdentity.identity_data.name || 
+               'Google User';
+      }
+    }
+    
+    // Fallback to user ID
+    return user.id.substring(0, 8) + '...';
+  };
 
   // Handle comment submission
   const handleCommentSubmit = () => {
@@ -122,6 +189,7 @@ export default function ProfilePage() {
 
   // Get the user with proper typing
   const user = auth.user as User;
+  const userIdentifier = getUserIdentifier(user);
 
   // If we have a user, show the profile page
   return (
@@ -133,8 +201,8 @@ export default function ProfilePage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <p className="text-gray-500 text-sm mb-1">Email</p>
-            <p className="font-medium">{user.email || 'Not available'}</p>
+            <p className="text-gray-500 text-sm mb-1">Email/Username</p>
+            <p className="font-medium">{userIdentifier}</p>
           </div>
           
           <div>
@@ -143,13 +211,11 @@ export default function ProfilePage() {
           </div>
           
           <div>
-            <p className="text-gray-500 text-sm mb-1">Email Verified</p>
+            <p className="text-gray-500 text-sm mb-1">Authentication Provider</p>
             <p className="font-medium">
-              {user.email_confirmed_at ? (
-                <span className="text-green-600">Verified</span>
-              ) : (
-                <span className="text-red-600">Not verified</span>
-              )}
+              {user.app_metadata?.provider || 
+               (user.identities && user.identities[0]?.provider) || 
+               'Email'}
             </p>
           </div>
           
