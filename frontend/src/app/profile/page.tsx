@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function ProfilePage() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
@@ -14,59 +14,35 @@ export default function ProfilePage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [localUser, setLocalUser] = useState<any>(null);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check authentication and redirect if needed
+  // Simplified authentication check - middleware will handle redirects if not authenticated
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkSession = async () => {
       try {
-        setIsCheckingSession(true);
+        // Check for a session directly
+        const { data } = await supabase.auth.getSession();
         
-        // First check if we already have a user in the context
-        if (user) {
-          console.log("User found in context:", user.email);
-          setLocalUser(user);
-          setIsCheckingSession(false);
-          return;
-        }
-        
-        // If no user in context, check for a session directly
-        console.log("No user in context, checking session directly");
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error checking session:", error);
+        if (!data.session) {
+          console.log("No session found in profile page");
           router.push('/auth/signin');
           return;
         }
         
-        console.log("Direct session check result:", data.session ? "Session found" : "No session");
-        
-        if (data.session) {
-          // We have a session but no user in context, set the local user
-          setLocalUser(data.session.user);
-          setIsCheckingSession(false);
-        } else {
-          // No session found, redirect to sign-in
-          console.log("No session found, redirecting to sign-in");
-          router.push('/auth/signin');
-        }
+        console.log("Session found in profile page:", data.session.user.email);
       } catch (error) {
-        console.error("Error in auth check:", error);
-        router.push('/auth/signin');
+        console.error("Error checking session:", error);
       } finally {
-        setIsCheckingSession(false);
+        setIsLoading(false);
       }
     };
     
-    checkAuth();
-  }, [user, router]);
+    checkSession();
+  }, [router]);
 
   // Fetch user's subscription data when we have a user
   useEffect(() => {
-    const currentUser = user || localUser;
-    if (!currentUser) return;
+    if (!user) return;
     
     const fetchSubscription = async () => {
       try {
@@ -74,7 +50,7 @@ export default function ProfilePage() {
         const { data, error } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', currentUser.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -92,11 +68,10 @@ export default function ProfilePage() {
     };
     
     fetchSubscription();
-  }, [user, localUser]);
+  }, [user]);
 
   const handleCancelSubscription = async () => {
-    const currentUser = user || localUser;
-    if (!currentUser || !subscription) return;
+    if (!user || !subscription) return;
     
     try {
       setIsCancelling(true);
@@ -137,7 +112,7 @@ export default function ProfilePage() {
   };
 
   // Show loading state while checking authentication
-  if (isLoading || isCheckingSession) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -145,9 +120,8 @@ export default function ProfilePage() {
     );
   }
 
-  // If we have a user (either from context or direct session check), show the profile page
-  const currentUser = user || localUser;
-  if (currentUser) {
+  // If we have a user, show the profile page
+  if (user) {
     return (
       <div className="max-w-4xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
@@ -182,18 +156,18 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-gray-500 text-sm mb-1">Email</p>
-              <p className="font-medium">{currentUser.email}</p>
+              <p className="font-medium">{user.email}</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Account ID</p>
-              <p className="font-medium">{currentUser.id.substring(0, 8)}...</p>
+              <p className="font-medium">{user.id.substring(0, 8)}...</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Email Verified</p>
               <p className="font-medium">
-                {currentUser.email_confirmed_at ? (
+                {user.email_confirmed_at ? (
                   <span className="text-green-600">Verified</span>
                 ) : (
                   <span className="text-red-600">Not verified</span>
@@ -204,7 +178,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-gray-500 text-sm mb-1">Last Sign In</p>
               <p className="font-medium">
-                {currentUser.last_sign_in_at ? new Date(currentUser.last_sign_in_at).toLocaleString() : 'N/A'}
+                {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
               </p>
             </div>
           </div>
