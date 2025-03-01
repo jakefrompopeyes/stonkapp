@@ -76,32 +76,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Initiating Google OAuth sign-in with popup window...');
+      console.log('[DEBUG] Initiating Google OAuth sign-in with popup window...', new Date().toISOString());
       
       // Use a popup window instead of a redirect
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?popup=true`,
+          redirectTo: `${window.location.origin}/auth/callback?popup=true&t=${Date.now()}`, // Add timestamp to prevent caching
           skipBrowserRedirect: true, // Don't redirect the current page, we'll handle the popup ourselves
         },
       });
       
       if (error) {
-        console.error('Error initiating Google OAuth:', error);
+        console.error('[DEBUG] Error initiating Google OAuth:', error);
         throw error;
       }
       
       if (!data.url) {
-        console.error('No OAuth URL returned from Supabase');
+        console.error('[DEBUG] No OAuth URL returned from Supabase');
         throw new Error('Failed to get authentication URL');
       }
       
-      console.log('Opening popup window for Google authentication...');
+      console.log('[DEBUG] OAuth URL received:', data.url);
+      console.log('[DEBUG] Opening popup window for Google authentication...', new Date().toISOString());
       
       // Open the authentication URL in a popup window
       const width = 600;
-      const height = 600;
+      const height = 700; // Increased height to ensure consent screen is fully visible
       const left = window.innerWidth / 2 - width / 2;
       const top = window.innerHeight / 2 - height / 2;
       
@@ -112,28 +113,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       
       if (!popup) {
-        console.error('Popup blocked by browser');
+        console.error('[DEBUG] Popup blocked by browser');
         throw new Error('Popup was blocked by the browser. Please allow popups for this site.');
       }
+      
+      // Try to focus the popup to ensure it's in the foreground
+      popup.focus();
       
       // Create a promise that will resolve when the popup completes
       return new Promise((resolve, reject) => {
         // Set a timeout to detect if the process is hanging
         const timeoutId = setTimeout(() => {
+          console.error('[DEBUG] Google sign-in timed out after 60 seconds', new Date().toISOString());
           if (popup && !popup.closed) {
             popup.close();
           }
-          reject(new Error('Google sign-in timed out after 60 seconds'));
+          reject(new Error('Google sign-in timed out after 60 seconds. Please try again.'));
         }, 60000);
         
         // Add a message event listener to handle messages from the popup
         const messageHandler = (event: MessageEvent) => {
           // Verify the origin of the message
-          if (event.origin !== window.location.origin) return;
+          console.log('[DEBUG] Received message from popup:', event.origin, event.data, new Date().toISOString());
+          
+          if (event.origin !== window.location.origin) {
+            console.log('[DEBUG] Ignoring message from different origin:', event.origin);
+            return;
+          }
           
           // Handle auth success message
           if (event.data?.type === 'auth-success') {
-            console.log('Received auth-success message from popup');
+            console.log('[DEBUG] Received auth-success message from popup', new Date().toISOString());
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
               popup.close();
@@ -145,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Handle auth error message
           if (event.data?.type === 'auth-error') {
-            console.error('Received auth-error message from popup:', event.data.error);
+            console.error('[DEBUG] Received auth-error message from popup:', event.data.error, new Date().toISOString());
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
               popup.close();
@@ -161,16 +171,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Poll the popup to check if it's been closed
         const pollPopup = setInterval(() => {
           if (!popup || popup.closed) {
+            console.log('[DEBUG] Popup closed', new Date().toISOString());
             clearInterval(pollPopup);
             clearTimeout(timeoutId);
+            window.removeEventListener('message', messageHandler);
             
             // Check if the user is authenticated after popup closes
             supabase.auth.getSession().then(({ data: { session } }) => {
               if (session) {
-                console.log('Successfully authenticated with Google');
+                console.log('[DEBUG] Successfully authenticated with Google after popup closed', new Date().toISOString());
                 resolve({ provider: 'google', url: data.url });
               } else {
-                console.log('Popup closed without completing authentication');
+                console.log('[DEBUG] Popup closed without completing authentication', new Date().toISOString());
                 reject(new Error('Authentication was cancelled or failed'));
               }
             });
@@ -179,20 +191,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Also listen for auth state changes as a backup
         const authListener = supabase.auth.onAuthStateChange((event, session) => {
+          console.log('[DEBUG] Auth state changed:', event, new Date().toISOString());
           if (event === 'SIGNED_IN' && session) {
-            console.log('Auth state changed: SIGNED_IN');
+            console.log('[DEBUG] Auth state changed: SIGNED_IN', new Date().toISOString());
             if (popup && !popup.closed) {
               popup.close();
             }
             clearInterval(pollPopup);
             clearTimeout(timeoutId);
+            window.removeEventListener('message', messageHandler);
             authListener.data.subscription.unsubscribe();
             resolve({ provider: 'google', url: data.url });
           }
         });
       });
     } catch (error) {
-      console.error('Error in signInWithGoogle:', error);
+      console.error('[DEBUG] Error in signInWithGoogle:', error, new Date().toISOString());
       throw error;
     }
   };

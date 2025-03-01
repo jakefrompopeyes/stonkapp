@@ -43,34 +43,48 @@ function SignInContent() {
     setIsLoading(true);
 
     try {
-      console.log('Starting Google sign-in from button click');
+      console.log('[DEBUG] Starting Google sign-in from button click', new Date().toISOString());
       
       // Show a message to the user that they'll be redirected
       setError('Opening Google authentication in a popup window...');
       
+      // Create a timeout to detect if the process is hanging at the Google consent screen
+      const consentScreenTimeoutId = setTimeout(() => {
+        console.log('[DEBUG] Google sign-in appears to be hanging at the consent screen', new Date().toISOString());
+        setError('If you see the Google consent screen, please click "Continue" to proceed. If nothing happens, try closing the popup and signing in again.');
+      }, 8000); // 8 seconds should be enough time to detect if we're stuck at the consent screen
+      
       try {
         const result = await signInWithGoogle();
-        console.log('Sign-in with Google result:', result);
+        console.log('[DEBUG] Sign-in with Google result:', result, new Date().toISOString());
+        
+        // Clear the consent screen timeout
+        clearTimeout(consentScreenTimeoutId);
         
         // If we get here, authentication was successful
         setError(null);
         router.push('/profile');
       } catch (error: any) {
-        console.error('Google sign-in error:', error);
+        // Clear the consent screen timeout
+        clearTimeout(consentScreenTimeoutId);
+        
+        console.error('[DEBUG] Google sign-in error:', error, new Date().toISOString());
         
         // Provide a more helpful error message based on the error
         if (error.message?.includes('blocked by the browser')) {
           setError('Popup was blocked by your browser. Please allow popups for this site and try again.');
         } else if (error.message?.includes('timed out')) {
-          setError('The sign-in process timed out. Please try again or use email sign-in instead.');
+          setError('The sign-in process timed out. This could be due to network issues or the Google consent screen not being completed. Please try again.');
         } else if (error.message?.includes('cancelled')) {
           setError('Sign-in was cancelled. Please try again.');
+        } else if (error.message?.includes('consent')) {
+          setError('Please complete the Google consent screen to continue. If you\'re seeing this message, the popup might still be open.');
         } else {
           setError(error.message || 'Failed to sign in with Google. Please try again.');
         }
       }
     } catch (error: any) {
-      console.error('Unexpected error during Google sign-in:', error);
+      console.error('[DEBUG] Unexpected error during Google sign-in:', error, new Date().toISOString());
       setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
