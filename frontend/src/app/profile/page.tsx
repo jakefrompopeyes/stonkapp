@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const auth = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
@@ -23,21 +23,22 @@ export default function ProfilePage() {
       addDebugLog("Profile page mounted");
       
       // First check if we already have a user in context
-      if (user) {
-        addDebugLog(`User found in context: ${user?.email || 'unknown'}`);
+      if (auth.user) {
+        addDebugLog(`User found in context: ${auth.user.email || 'unknown'}`);
         setIsLoading(false);
         return;
       }
       
       // If no user, try to refresh
       addDebugLog("No user in context, trying to refresh");
-      await refreshUser();
+      await auth.refreshUser();
       
-      // Check again after refresh
+      // Check again after refresh - use a timeout to allow state to update
       setTimeout(() => {
-        const currentUser = user;
-        if (currentUser) {
-          addDebugLog(`User found after refresh: ${currentUser?.email || 'unknown'}`);
+        // We need to check the current user state again here
+        // since it might have changed after refreshUser()
+        if (auth.user) {
+          addDebugLog(`User found after refresh: ${auth.user.email || 'unknown'}`);
           setIsLoading(false);
         } else {
           addDebugLog("No user found after refresh, redirecting to sign-in");
@@ -47,7 +48,7 @@ export default function ProfilePage() {
     };
     
     checkAuth();
-  }, [user, refreshUser, router]);
+  }, [auth, router]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -82,18 +83,18 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <p className="text-gray-500 text-sm mb-1">Email</p>
-            <p className="font-medium">{user?.email || 'Not available'}</p>
+            <p className="font-medium">{auth.user?.email || 'Not available'}</p>
           </div>
           
           <div>
             <p className="text-gray-500 text-sm mb-1">Account ID</p>
-            <p className="font-medium">{user?.id ? `${user.id.substring(0, 8)}...` : 'Not available'}</p>
+            <p className="font-medium">{auth.user?.id ? `${auth.user.id.substring(0, 8)}...` : 'Not available'}</p>
           </div>
           
           <div>
             <p className="text-gray-500 text-sm mb-1">Email Verified</p>
             <p className="font-medium">
-              {user?.email_confirmed_at ? (
+              {auth.user?.email_confirmed_at ? (
                 <span className="text-green-600">Verified</span>
               ) : (
                 <span className="text-red-600">Not verified</span>
@@ -104,7 +105,7 @@ export default function ProfilePage() {
           <div>
             <p className="text-gray-500 text-sm mb-1">Last Sign In</p>
             <p className="font-medium">
-              {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
+              {auth.user?.last_sign_in_at ? new Date(auth.user.last_sign_in_at).toLocaleString() : 'N/A'}
             </p>
           </div>
         </div>
