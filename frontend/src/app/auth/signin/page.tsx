@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,26 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check if there's an error message in the URL (e.g., from a failed OAuth callback)
+  useEffect(() => {
+    const errorMsg = searchParams.get('error');
+    if (errorMsg) {
+      setError(decodeURIComponent(errorMsg));
+    }
+    
+    // Check if user is already signed in
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        console.log("User already signed in, redirecting to home");
+        router.push('/');
+      }
+    };
+    
+    checkSession();
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +52,7 @@ export default function SignInPage() {
       setTimeout(() => {
         console.log("Sign-in successful, redirecting to home page");
         router.push('/');
-      }, 500);
+      }, 1000);
     } catch (err: any) {
       console.error('Sign in error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials and try again.');
@@ -61,6 +82,12 @@ export default function SignInPage() {
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           {error}
+          <button 
+            className="float-right font-bold"
+            onClick={() => setError(null)}
+          >
+            &times;
+          </button>
         </div>
       )}
       
@@ -93,6 +120,26 @@ export default function SignInPage() {
             placeholder="••••••••"
             required
           />
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              name="remember-me"
+              type="checkbox"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              Remember me
+            </label>
+          </div>
+          
+          <div className="text-sm">
+            <Link href="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+              Forgot your password?
+            </Link>
+          </div>
         </div>
         
         <div>
