@@ -16,15 +16,27 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Set client-side flag
   useEffect(() => {
     setIsClient(true);
+    
+    // Check for session directly from Supabase
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log("Current session:", data.session);
+    };
+    
+    checkSession();
   }, []);
   
   // Separate useEffect for authentication check to avoid redirect flashing
   useEffect(() => {
     // Only redirect if we're on the client, not loading, and there's no user
     if (isClient && !isLoading && !user) {
+      console.log("No user found, redirecting to sign in");
       router.push('/auth/signin');
+    } else if (isClient && user) {
+      console.log("User authenticated:", user.email);
     }
   }, [user, isLoading, router, isClient]);
 
