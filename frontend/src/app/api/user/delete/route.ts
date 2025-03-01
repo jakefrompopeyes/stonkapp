@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Check if required environment variables are available
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Initialize Supabase admin client if keys are available
+const supabaseAdmin = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : null;
 
 export async function POST(request: NextRequest) {
+  // Check if required services are initialized
+  if (!supabaseAdmin) {
+    console.error('Missing required environment variables for user deletion');
+    return NextResponse.json(
+      { error: 'Service configuration error. Please contact support.' },
+      { status: 500 }
+    );
+  }
+
   try {
     // Get the request body
     const body = await request.json();

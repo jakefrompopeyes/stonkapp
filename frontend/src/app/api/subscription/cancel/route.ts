@@ -2,18 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any, // Type assertion to avoid version mismatch
-});
+// Check if required environment variables are available
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Initialize Stripe if key is available
+const stripe = STRIPE_SECRET_KEY 
+  ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' as any })
+  : null;
+
+// Initialize Supabase admin client if keys are available
+const supabaseAdmin = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : null;
 
 export async function POST(request: NextRequest) {
+  // Check if required services are initialized
+  if (!stripe || !supabaseAdmin) {
+    console.error('Missing required environment variables for subscription cancellation');
+    return NextResponse.json(
+      { error: 'Service configuration error. Please contact support.' },
+      { status: 500 }
+    );
+  }
+
   try {
     // Get the request body
     const body = await request.json();

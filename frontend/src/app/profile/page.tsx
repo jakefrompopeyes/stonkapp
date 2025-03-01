@@ -75,9 +75,10 @@ export default function ProfilePage() {
         }),
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete account');
+        throw new Error(data.error || 'Failed to delete account');
       }
       
       // Sign out the user
@@ -110,9 +111,10 @@ export default function ProfilePage() {
         }),
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to cancel subscription');
+        throw new Error(data.error || 'Failed to cancel subscription');
       }
       
       // Update local state
