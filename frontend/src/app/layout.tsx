@@ -11,9 +11,11 @@ export const metadata: Metadata = {
   title: 'StonkScan',
   description: 'Track and manage your investments',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/images/apple-touch-icon.png',
-    shortcut: '/images/favicon-32x32.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/images/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+    ],
+    apple: { url: '/images/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
   },
 }
 
