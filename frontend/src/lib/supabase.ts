@@ -12,4 +12,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseAnonKey); 
+// Configure with localStorage for session persistence
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+}); 

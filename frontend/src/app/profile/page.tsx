@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function ProfilePage() {
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
@@ -14,44 +14,48 @@ export default function ProfilePage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [manualSessionCheck, setManualSessionCheck] = useState<boolean>(false);
-  const [sessionUser, setSessionUser] = useState<any>(null);
 
-  // Direct session check that doesn't rely on the AuthContext
+  // Check authentication and redirect if needed
   useEffect(() => {
-    const checkSessionDirectly = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        console.log("Direct session check:", data.session);
-        
-        if (data.session) {
-          setSessionUser(data.session.user);
-          setManualSessionCheck(true);
-        } else {
-          // Only redirect if we're absolutely sure there's no session
+    const checkAuth = async () => {
+      // First check if we're already authenticated via context
+      if (isAuthenticated) {
+        console.log("User is authenticated via context:", user?.email);
+        return;
+      }
+      
+      // If not authenticated and not loading, do a direct session check
+      if (!isLoading && !isAuthenticated) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          console.log("Direct session check:", data.session);
+          
+          // If no session found after direct check, redirect to sign-in
+          if (!data.session) {
+            console.log("No session found, redirecting to sign-in");
+            router.push('/auth/signin');
+          }
+        } catch (error) {
+          console.error("Error checking session:", error);
           router.push('/auth/signin');
         }
-      } catch (error) {
-        console.error("Error checking session directly:", error);
       }
     };
     
-    checkSessionDirectly();
-  }, [router]);
+    checkAuth();
+  }, [user, isLoading, isAuthenticated, router]);
 
   // Fetch user's subscription data
   useEffect(() => {
     const fetchSubscription = async () => {
-      // Use either the context user or the directly fetched session user
-      const currentUser = user || sessionUser;
-      if (!currentUser) return;
+      if (!user) return;
       
       try {
         setIsLoadingSubscription(true);
         const { data, error } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', currentUser.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -69,12 +73,10 @@ export default function ProfilePage() {
     };
     
     fetchSubscription();
-  }, [user, sessionUser]);
+  }, [user]);
 
   const handleCancelSubscription = async () => {
-    // Use either the context user or the directly fetched session user
-    const currentUser = user || sessionUser;
-    if (!currentUser || !subscription) return;
+    if (!user || !subscription) return;
     
     try {
       setIsCancelling(true);
@@ -115,7 +117,7 @@ export default function ProfilePage() {
   };
 
   // Show loading state while checking authentication
-  if (isLoading && !manualSessionCheck) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -123,9 +125,8 @@ export default function ProfilePage() {
     );
   }
 
-  // If we have a user (either from context or direct session check), show the profile page
-  const currentUser = user || sessionUser;
-  if (currentUser) {
+  // If we have a user, show the profile page
+  if (user) {
     return (
       <div className="max-w-4xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
@@ -160,18 +161,18 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-gray-500 text-sm mb-1">Email</p>
-              <p className="font-medium">{currentUser.email}</p>
+              <p className="font-medium">{user.email}</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Account ID</p>
-              <p className="font-medium">{currentUser.id.substring(0, 8)}...</p>
+              <p className="font-medium">{user.id.substring(0, 8)}...</p>
             </div>
             
             <div>
               <p className="text-gray-500 text-sm mb-1">Email Verified</p>
               <p className="font-medium">
-                {currentUser.email_confirmed_at ? (
+                {user.email_confirmed_at ? (
                   <span className="text-green-600">Verified</span>
                 ) : (
                   <span className="text-red-600">Not verified</span>
@@ -182,7 +183,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-gray-500 text-sm mb-1">Last Sign In</p>
               <p className="font-medium">
-                {currentUser.last_sign_in_at ? new Date(currentUser.last_sign_in_at).toLocaleString() : 'N/A'}
+                {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
               </p>
             </div>
           </div>

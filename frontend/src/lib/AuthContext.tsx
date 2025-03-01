@@ -13,6 +13,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<{ provider: Provider; url: string } | unknown>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  isAuthenticated: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -29,8 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Initial auth session:", session ? "Found" : "None", session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
@@ -44,8 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state change:", event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+          setIsAuthenticated(true);
+        } else {
+          setSession(null);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+        
         setIsLoading(false);
       }
     );
@@ -162,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signOut,
     refreshUser,
+    isAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
