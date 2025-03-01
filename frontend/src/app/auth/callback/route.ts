@@ -24,13 +24,7 @@ export async function GET(request: NextRequest) {
     // For all redirects, go back to the sign-in page with the error
     const redirectUrl = new URL(`/auth/signin?error=${encodeURIComponent(error_description || error)}`, requestUrl.origin);
     console.log('[DEBUG] Redirecting to:', redirectUrl.toString(), new Date().toISOString());
-    
-    // Create response with no-cache headers
-    const response = NextResponse.redirect(redirectUrl);
-    response.headers.set('Cache-Control', 'no-store, max-age=0');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-    return response;
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (code) {
@@ -66,13 +60,7 @@ export async function GET(request: NextRequest) {
         // For all redirects, go back to the sign-in page with the error
         const redirectUrl = new URL(`/auth/signin?error=${encodeURIComponent(error.message)}`, requestUrl.origin);
         console.log('[DEBUG] Redirecting to:', redirectUrl.toString(), new Date().toISOString());
-        
-        // Create response with no-cache headers
-        const response = NextResponse.redirect(redirectUrl);
-        response.headers.set('Cache-Control', 'no-store, max-age=0');
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
-        return response;
+        return NextResponse.redirect(redirectUrl);
       }
       
       console.log('[DEBUG] Session exchange successful', data?.session ? 'Session obtained' : 'No session', new Date().toISOString());
@@ -81,26 +69,14 @@ export async function GET(request: NextRequest) {
       console.log('[DEBUG] Redirecting to profile page', new Date().toISOString());
       const profileUrl = new URL('/profile', requestUrl.origin);
       console.log('[DEBUG] Redirecting to:', profileUrl.toString(), new Date().toISOString());
-      
-      // Create response with no-cache headers
-      const response = NextResponse.redirect(profileUrl);
-      response.headers.set('Cache-Control', 'no-store, max-age=0');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      return response;
+      return NextResponse.redirect(profileUrl);
     } catch (err) {
       console.error('[DEBUG] Unexpected error during authentication:', err, new Date().toISOString());
       
       // For all redirects, go back to the sign-in page with a generic error
       const redirectUrl = new URL('/auth/signin?error=An unexpected error occurred during authentication', requestUrl.origin);
       console.log('[DEBUG] Redirecting to:', redirectUrl.toString(), new Date().toISOString());
-      
-      // Create response with no-cache headers
-      const response = NextResponse.redirect(redirectUrl);
-      response.headers.set('Cache-Control', 'no-store, max-age=0');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      return response;
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
@@ -108,11 +84,5 @@ export async function GET(request: NextRequest) {
   console.log('[DEBUG] No code present, redirecting to sign-in page', new Date().toISOString());
   const signInUrl = new URL('/auth/signin', requestUrl.origin);
   console.log('[DEBUG] Redirecting to:', signInUrl.toString(), new Date().toISOString());
-  
-  // Create response with no-cache headers
-  const response = NextResponse.redirect(signInUrl);
-  response.headers.set('Cache-Control', 'no-store, max-age=0');
-  response.headers.set('Pragma', 'no-cache');
-  response.headers.set('Expires', '0');
-  return response;
+  return NextResponse.redirect(signInUrl);
 } 
