@@ -42,48 +42,37 @@ function SignInContent() {
     setError(null);
     setIsLoading(true);
 
-    // Add a timeout to detect if the process is hanging
-    const timeoutId = setTimeout(() => {
-      console.warn('Google sign-in process is taking longer than expected (10 seconds)');
-      // Don't set an error message here, as the redirect might still be in progress
-      // Just log the warning for debugging purposes
-    }, 10000);
-
     try {
       console.log('Starting Google sign-in from button click');
       
       // Show a message to the user that they'll be redirected
-      setError('You will be redirected to Google for authentication...');
+      setError('Opening Google authentication in a popup window...');
       
-      const result = await signInWithGoogle();
-      console.log('Sign-in with Google result:', result);
-      
-      // Clear the timeout if we got a result
-      clearTimeout(timeoutId);
-      
-      // If we get here without a redirect, it means the OAuth flow started successfully
-      // but we're waiting for the redirect. Show a helpful message.
-      setError('Redirecting to Google...');
-      
-      // The page should redirect automatically, but if we're still here after 5 seconds,
-      // provide a manual redirect option
-      setTimeout(() => {
-        if (result?.url) {
-          setError('Redirect not happening automatically. <a href="' + result.url + '" class="underline">Click here to continue</a>');
+      try {
+        const result = await signInWithGoogle();
+        console.log('Sign-in with Google result:', result);
+        
+        // If we get here, authentication was successful
+        setError(null);
+        router.push('/profile');
+      } catch (error: any) {
+        console.error('Google sign-in error:', error);
+        
+        // Provide a more helpful error message based on the error
+        if (error.message?.includes('blocked by the browser')) {
+          setError('Popup was blocked by your browser. Please allow popups for this site and try again.');
+        } else if (error.message?.includes('timed out')) {
+          setError('The sign-in process timed out. Please try again or use email sign-in instead.');
+        } else if (error.message?.includes('cancelled')) {
+          setError('Sign-in was cancelled. Please try again.');
+        } else {
+          setError(error.message || 'Failed to sign in with Google. Please try again.');
         }
-      }, 5000);
-      
-    } catch (error: any) {
-      clearTimeout(timeoutId); // Clear the timeout if there's an error
-      console.error('Google sign-in error:', error);
-      
-      // Provide a more helpful error message based on the error
-      if (error.message?.includes('timed out')) {
-        setError('The sign-in process timed out. Please try again or use email sign-in instead.');
-      } else {
-        setError(error.message || 'Failed to sign in with Google. Please try again.');
       }
-      
+    } catch (error: any) {
+      console.error('Unexpected error during Google sign-in:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

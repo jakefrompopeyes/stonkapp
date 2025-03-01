@@ -7,17 +7,52 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
+  const isPopup = requestUrl.searchParams.get('popup') === 'true';
 
   console.log('Auth callback received:', { 
     hasCode: !!code, 
     error, 
     error_description,
-    url: request.url
+    url: request.url,
+    isPopup
   });
 
   // Handle OAuth errors
   if (error) {
     console.error('OAuth error:', error, error_description);
+    
+    // If this is a popup window, we need to send a message to the parent window
+    if (isPopup) {
+      return new Response(
+        `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Authentication Error</title>
+            <script>
+              window.onload = function() {
+                window.opener.postMessage({ 
+                  type: 'auth-error', 
+                  error: ${JSON.stringify(error_description || error)}
+                }, window.location.origin);
+                window.close();
+              }
+            </script>
+          </head>
+          <body>
+            <p>Authentication error. This window should close automatically.</p>
+          </body>
+        </html>
+        `,
+        {
+          headers: {
+            'Content-Type': 'text/html',
+          },
+        }
+      );
+    }
+    
+    // For regular redirects, go back to the sign-in page with the error
     return NextResponse.redirect(
       new URL(`/auth/signin?error=${encodeURIComponent(error_description || error)}`, requestUrl.origin)
     );
@@ -50,16 +85,115 @@ export async function GET(request: NextRequest) {
       
       if (error) {
         console.error('Error exchanging code for session:', error);
+        
+        // If this is a popup window, we need to send a message to the parent window
+        if (isPopup) {
+          return new Response(
+            `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Authentication Error</title>
+                <script>
+                  window.onload = function() {
+                    window.opener.postMessage({ 
+                      type: 'auth-error', 
+                      error: ${JSON.stringify(error.message)}
+                    }, window.location.origin);
+                    window.close();
+                  }
+                </script>
+              </head>
+              <body>
+                <p>Authentication error. This window should close automatically.</p>
+              </body>
+            </html>
+            `,
+            {
+              headers: {
+                'Content-Type': 'text/html',
+              },
+            }
+          );
+        }
+        
+        // For regular redirects, go back to the sign-in page with the error
         return NextResponse.redirect(
           new URL(`/auth/signin?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
         );
       }
       
-      console.log('Session exchange successful, redirecting to profile page');
-      // Redirect to profile page on successful authentication
+      console.log('Session exchange successful');
+      
+      // If this is a popup window, we need to send a message to the parent window
+      if (isPopup) {
+        return new Response(
+          `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Authentication Successful</title>
+              <script>
+                window.onload = function() {
+                  window.opener.postMessage({ 
+                    type: 'auth-success',
+                    session: ${JSON.stringify(data.session)}
+                  }, window.location.origin);
+                  window.close();
+                }
+              </script>
+            </head>
+            <body>
+              <p>Authentication successful. This window should close automatically.</p>
+            </body>
+          </html>
+          `,
+          {
+            headers: {
+              'Content-Type': 'text/html',
+            },
+          }
+        );
+      }
+      
+      // For regular redirects, go to the profile page
+      console.log('Redirecting to profile page');
       return NextResponse.redirect(new URL('/profile', requestUrl.origin));
     } catch (err) {
       console.error('Unexpected error during authentication:', err);
+      
+      // If this is a popup window, we need to send a message to the parent window
+      if (isPopup) {
+        return new Response(
+          `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Authentication Error</title>
+              <script>
+                window.onload = function() {
+                  window.opener.postMessage({ 
+                    type: 'auth-error', 
+                    error: 'An unexpected error occurred'
+                  }, window.location.origin);
+                  window.close();
+                }
+              </script>
+            </head>
+            <body>
+              <p>Authentication error. This window should close automatically.</p>
+            </body>
+          </html>
+          `,
+          {
+            headers: {
+              'Content-Type': 'text/html',
+            },
+          }
+        );
+      }
+      
+      // For regular redirects, go back to the sign-in page with a generic error
       return NextResponse.redirect(
         new URL('/auth/signin?error=An unexpected error occurred', requestUrl.origin)
       );
