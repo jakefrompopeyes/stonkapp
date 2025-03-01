@@ -21,8 +21,8 @@ const plans = [
   },
   {
     id: 'pro',
-    name: 'Pro',
-    price: '$9.99',
+    name: 'Premium',
+    price: '$19.99',
     period: 'per month',
     description: 'Enhanced access to stock data',
     features: [
@@ -35,8 +35,8 @@ const plans = [
   },
   {
     id: 'premium',
-    name: 'Premium',
-    price: '$19.99',
+    name: 'Pro',
+    price: '$9.99',
     period: 'per month',
     description: 'Professional-grade stock analysis',
     features: [
