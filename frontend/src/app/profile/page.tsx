@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   // Set client-side flag
   useEffect(() => {
@@ -24,6 +25,10 @@ export default function ProfilePage() {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       console.log("Current session:", data.session);
+      if (data.session) {
+        // If we have a session directly from Supabase, we're definitely logged in
+        setHasCheckedAuth(true);
+      }
     };
     
     checkSession();
@@ -31,14 +36,27 @@ export default function ProfilePage() {
   
   // Separate useEffect for authentication check to avoid redirect flashing
   useEffect(() => {
-    // Only redirect if we're on the client, not loading, and there's no user
-    if (isClient && !isLoading && !user) {
-      console.log("No user found, redirecting to sign in");
+    // Only redirect if:
+    // 1. We're on the client
+    // 2. Auth is not loading
+    // 3. We've waited a reasonable time for auth to initialize
+    // 4. There's definitely no user
+    const authCheckTimeout = setTimeout(() => {
+      setHasCheckedAuth(true);
+    }, 2000); // Give auth 2 seconds to initialize before making a decision
+    
+    return () => clearTimeout(authCheckTimeout);
+  }, []);
+  
+  // Handle redirect only after we've checked auth
+  useEffect(() => {
+    if (isClient && !isLoading && hasCheckedAuth && !user) {
+      console.log("No user found after checking auth, redirecting to sign in");
       router.push('/auth/signin');
     } else if (isClient && user) {
       console.log("User authenticated:", user.email);
     }
-  }, [user, isLoading, router, isClient]);
+  }, [user, isLoading, router, isClient, hasCheckedAuth]);
 
   // Fetch user's subscription data
   useEffect(() => {
