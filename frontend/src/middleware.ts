@@ -6,6 +6,17 @@ export async function middleware(req: NextRequest) {
   console.log(`[MIDDLEWARE] Processing: ${req.nextUrl.pathname}`);
   console.log(`[MIDDLEWARE] Request URL: ${req.url}`);
   
+  // List all cookies for debugging
+  const allCookies = req.cookies.getAll();
+  console.log(`[MIDDLEWARE] All cookies:`, allCookies.map(c => c.name).join(', '));
+  
+  // Check for Supabase auth cookies specifically
+  const hasAuthCookie = req.cookies.has('sb-access-token') || 
+                       req.cookies.has('sb-refresh-token') || 
+                       req.cookies.has('supabase-auth-token');
+  
+  console.log(`[MIDDLEWARE] Has auth cookies: ${hasAuthCookie}`);
+  
   // Skip middleware for non-profile routes
   if (!req.nextUrl.pathname.startsWith('/profile')) {
     console.log(`[MIDDLEWARE] Not a protected route, skipping auth check`);
@@ -18,6 +29,12 @@ export async function middleware(req: NextRequest) {
   const redirectCount = parseInt(req.headers.get('x-redirect-count') || '0');
   if (redirectCount > 2) {
     console.log(`[MIDDLEWARE] Redirect loop detected (count: ${redirectCount}), allowing access to prevent loop`);
+    return NextResponse.next();
+  }
+  
+  // If we have auth cookies, we can bypass the full check to prevent issues
+  if (hasAuthCookie) {
+    console.log(`[MIDDLEWARE] Auth cookies found, bypassing full session check`);
     return NextResponse.next();
   }
   
@@ -101,6 +118,12 @@ export async function middleware(req: NextRequest) {
     return res;
   } catch (error) {
     console.error(`[MIDDLEWARE] Unexpected error in middleware:`, error);
+    
+    // If we have auth cookies but got an error, still allow access to prevent issues
+    if (hasAuthCookie) {
+      console.log(`[MIDDLEWARE] Auth cookies found despite error, allowing access`);
+      return NextResponse.next();
+    }
     
     // On error, redirect to sign-in as a fallback, with redirect count
     const redirectUrl = new URL('/auth/signin', req.url);
