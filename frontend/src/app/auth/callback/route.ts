@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
     url: request.url,
     isPopup,
     timestamp,
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    headers: Object.fromEntries(request.headers.entries()),
+    cookies: request.cookies.getAll().map(c => c.name)
   });
 
   // Handle OAuth errors
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
               }
               
               // Try to send the message when the page loads
-              window.onload = sendErrorToParent;
+              document.addEventListener('DOMContentLoaded', sendErrorToParent);
               
               // Also try again after a short delay as a backup
               setTimeout(sendErrorToParent, 500);
@@ -144,7 +146,7 @@ export async function GET(request: NextRequest) {
                   }
                   
                   // Try to send the message when the page loads
-                  window.onload = sendErrorToParent;
+                  document.addEventListener('DOMContentLoaded', sendErrorToParent);
                   
                   // Also try again after a short delay as a backup
                   setTimeout(sendErrorToParent, 500);
@@ -189,7 +191,7 @@ export async function GET(request: NextRequest) {
                       console.log('[DEBUG] Sending success message to parent window');
                       window.opener.postMessage({ 
                         type: 'auth-success',
-                        session: ${JSON.stringify(data.session)}
+                        session: ${JSON.stringify({ user: data.session?.user })}
                       }, window.location.origin);
                       
                       // Close the popup after a short delay to ensure the message is sent
@@ -205,7 +207,7 @@ export async function GET(request: NextRequest) {
                 }
                 
                 // Try to send the message when the page loads
-                window.onload = sendSuccessToParent;
+                document.addEventListener('DOMContentLoaded', sendSuccessToParent);
                 
                 // Also try again after a short delay as a backup
                 setTimeout(sendSuccessToParent, 500);
@@ -264,7 +266,7 @@ export async function GET(request: NextRequest) {
                 }
                 
                 // Try to send the message when the page loads
-                window.onload = sendErrorToParent;
+                document.addEventListener('DOMContentLoaded', sendErrorToParent);
                 
                 // Also try again after a short delay as a backup
                 setTimeout(sendErrorToParent, 500);

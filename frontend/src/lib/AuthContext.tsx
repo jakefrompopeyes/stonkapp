@@ -84,6 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options: {
           redirectTo: `${window.location.origin}/auth/callback?popup=true&t=${Date.now()}`, // Add timestamp to prevent caching
           skipBrowserRedirect: true, // Don't redirect the current page, we'll handle the popup ourselves
+          queryParams: {
+            // Force consent screen to show every time
+            prompt: 'consent',
+            // Ensure we get a fresh authentication
+            access_type: 'offline',
+            // Include email scope explicitly
+            scope: 'email profile',
+          },
         },
       });
       

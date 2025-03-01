@@ -52,6 +52,13 @@ function SignInContent() {
       const consentScreenTimeoutId = setTimeout(() => {
         console.log('[DEBUG] Google sign-in appears to be hanging at the consent screen', new Date().toISOString());
         setError('If you see the Google consent screen, please click "Continue" to proceed. If nothing happens, try closing the popup and signing in again.');
+        
+        // Add another timeout to check if we're still hanging after a longer period
+        setTimeout(() => {
+          console.log('[DEBUG] Google sign-in still appears to be hanging', new Date().toISOString());
+          setError('The Google sign-in process seems to be taking longer than expected. If you see a popup window, please complete the authentication there. If not, please try again.');
+          setIsLoading(false);
+        }, 15000);
       }, 8000); // 8 seconds should be enough time to detect if we're stuck at the consent screen
       
       try {
