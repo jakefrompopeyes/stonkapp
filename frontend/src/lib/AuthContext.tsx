@@ -78,21 +78,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('[DEBUG] Initiating Google OAuth sign-in with direct redirect...', new Date().toISOString());
       
+      // Get the current URL origin for proper redirect
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/auth/callback`;
+      
+      console.log('[DEBUG] Using redirect URL:', redirectUrl);
+      
       // Use direct redirect instead of a popup window
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?t=${Date.now()}`, // Add timestamp to prevent caching
-          // Don't skip browser redirect - we want a full page redirect
+          redirectTo: redirectUrl,
+          // Important: Do NOT add any additional query parameters to the redirectTo URL
           queryParams: {
-            // Force consent screen to show every time and use select_account to allow user to choose account
-            prompt: 'consent select_account',
+            // Force consent screen to show every time
+            prompt: 'consent',
             // Ensure we get a fresh authentication
             access_type: 'offline',
             // Include email scope explicitly
             scope: 'email profile',
-            // Add additional parameters to prevent caching issues
-            include_granted_scopes: 'true',
           },
         },
       });
@@ -109,12 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[DEBUG] OAuth URL received, redirecting to Google authentication...', data.url, new Date().toISOString());
       
-      // Add a small delay before redirecting to ensure logs are sent
-      setTimeout(() => {
-        // Instead of opening a popup, we'll redirect the current page
-        window.location.href = data.url;
-        console.log('[DEBUG] Redirect initiated', new Date().toISOString());
-      }, 100);
+      // Instead of opening a popup, we'll redirect the current page
+      // No setTimeout here - direct redirect is more reliable
+      window.location.href = data.url;
       
       // Return a promise that resolves after a timeout
       // This is just to keep the UI in loading state until the redirect happens

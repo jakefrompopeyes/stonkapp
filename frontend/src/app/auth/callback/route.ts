@@ -7,22 +7,14 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
-  const isPopup = requestUrl.searchParams.get('popup') === 'true';
-  const timestamp = requestUrl.searchParams.get('t'); // Get timestamp for debugging
 
   console.log('[DEBUG] Auth callback received:', { 
     hasCode: !!code, 
     error, 
     error_description,
     url: request.url,
-    isPopup,
-    timestamp,
-    time: new Date().toISOString(),
-    headers: Object.fromEntries(request.headers.entries()),
-    cookies: request.cookies.getAll().map(c => c.name),
     origin: requestUrl.origin,
-    pathname: requestUrl.pathname,
-    searchParams: Object.fromEntries(requestUrl.searchParams.entries())
+    time: new Date().toISOString(),
   });
 
   // Handle OAuth errors
@@ -40,25 +32,18 @@ export async function GET(request: NextRequest) {
       console.log('[DEBUG] Exchanging code for session...', new Date().toISOString());
       const cookieStore = cookies();
       
-      // Log all cookies for debugging
-      console.log('[DEBUG] All cookies:', cookieStore.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 10) + '...' })));
-      
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
           cookies: {
             get(name: string) {
-              const cookie = cookieStore.get(name);
-              console.log('[DEBUG] Getting cookie:', name, cookie ? 'found' : 'not found');
-              return cookie?.value;
+              return cookieStore.get(name)?.value;
             },
             set(name: string, value: string, options: any) {
-              console.log('[DEBUG] Setting cookie:', name, options);
               cookieStore.set({ name, value, ...options });
             },
             remove(name: string, options: any) {
-              console.log('[DEBUG] Removing cookie:', name, options);
               cookieStore.set({ name, value: '', ...options });
             },
           },
