@@ -2,15 +2,29 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 
-// Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
-});
+// Initialize Stripe with the secret key if available
+let stripe: Stripe | null = null;
+
+// Only initialize Stripe if the API key is available
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
+  });
+}
 
 // This is your Stripe webhook secret for testing your endpoint locally
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
+  // Check if Stripe is initialized
+  if (!stripe) {
+    console.error('Stripe API key is not configured');
+    return NextResponse.json(
+      { error: 'Payment service is not configured' },
+      { status: 500 }
+    );
+  }
+
   const payload = await request.text();
   const signature = request.headers.get('stripe-signature') as string;
 
