@@ -165,12 +165,13 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ ticker, onPeriodChang
             fromDate.setDate(toDate.getDate() - 7);
             break;
           case '1M':
-            // Try a different approach for 1M - use hourly data with a larger multiplier
-            timespan = 'hour';
-            multiplier = 4; // Every 4 hours = 6 data points per day = ~180 points per month
-            // Set the date range correctly
+            // Try a different approach for 1M - use daily data instead of hourly
+            timespan = 'day';
+            multiplier = 1; // Use daily data for better coverage
+            // Set the date range to exactly one month
             fromDate = new Date(toDate);
             fromDate.setMonth(fromDate.getMonth() - 1);
+            debugText += `1M view: Using ${timespan} data with multiplier=${multiplier}. Date range: ${fromDate.toISOString().split('T')[0]} to ${toDate.toISOString().split('T')[0]}.\n`;
             break;
           case '3M':
             // For 3M, use daily data
