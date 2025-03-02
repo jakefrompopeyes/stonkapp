@@ -296,7 +296,7 @@ export default function StockDetailPage() {
                 )}
                 <div>
                   <h1 className="text-2xl font-bold">{stockDetails.name} ({stockDetails.ticker})</h1>
-                  <p className="text-gray-600">{stockDetails.market} · {stockDetails.locale}</p>
+                  <p className="text-gray-600">{stockDetails.sic_description || stockDetails.market} · {stockDetails.locale}</p>
                   {latestPrice && (
                     <div className="mt-1">
                       <span className="text-2xl font-bold">${latestPrice.c.toFixed(2)}</span>
@@ -377,6 +377,14 @@ export default function StockDetailPage() {
                       {formatDate(stockDetails.list_date)}
                     </span>
                   </div>
+                  {stockDetails.sic_code && stockDetails.sic_description && (
+                    <div>
+                      <span className="text-gray-600">Industry: </span>
+                      <span className="font-medium text-gray-800">
+                        {stockDetails.sic_description} (SIC: {stockDetails.sic_code})
+                      </span>
+                    </div>
+                  )}
                   {stockDetails.address && (
                     <div>
                       <span className="text-gray-600">Headquarters: </span>

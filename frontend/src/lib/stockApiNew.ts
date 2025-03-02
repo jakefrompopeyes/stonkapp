@@ -34,6 +34,8 @@ export interface StockDetails {
     logo_url?: string;
     icon_url?: string;
   };
+  sic_code?: string;
+  sic_description?: string;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -198,7 +200,9 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       branding: item.branding ? {
         logo_url: item.branding.logo_url,
         icon_url: item.branding.icon_url
-      } : undefined
+      } : undefined,
+      sic_code: item.sic_code,
+      sic_description: item.sic_description
     };
   } catch (error) {
     console.error(`Error fetching details for ${ticker}:`, error);
@@ -216,7 +220,9 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       list_date: undefined,
       address: undefined,
       homepage_url: undefined,
-      branding: undefined
+      branding: undefined,
+      sic_code: undefined,
+      sic_description: undefined
     };
   }
 };
