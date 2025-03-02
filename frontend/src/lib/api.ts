@@ -305,10 +305,51 @@ export const getStockPrices = async (
     const toDate = to || new Date().toISOString().split('T')[0];
     const fromDate = from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
+    // Log the request parameters
+    console.log(`Fetching ${ticker} prices from ${fromDate} to ${toDate} with timespan=${timespan}, multiplier=${multiplier}`);
+    
     const response = await polygonApi.get(`/v2/aggs/ticker/${ticker}/range/${multiplier}/${timespan}/${fromDate}/${toDate}`);
     
-    // Transform the response to match our expected format
-    const prices = response.data.results.map((item: any) => ({
+    // Check if we have results
+    if (!response.data.results || response.data.results.length < 2) {
+      console.warn(`Insufficient price data for ${ticker} with timespan=${timespan}, multiplier=${multiplier}`);
+      
+      // Special handling for 1D timeframe - try to get hourly data instead of minute data
+      if (timespan === 'minute') {
+        console.log('Falling back to hourly data for 1D view');
+        
+        // Calculate a new date range for the last 24 hours
+        const endDate = new Date();
+        const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+        
+        const fallbackFrom = startDate.toISOString().split('T')[0];
+        const fallbackTo = endDate.toISOString().split('T')[0];
+        
+        // Try to get hourly data instead
+        const hourlyResponse = await polygonApi.get(`/v2/aggs/ticker/${ticker}/range/1/hour/${fallbackFrom}/${fallbackTo}`);
+        
+        if (hourlyResponse.data.results && hourlyResponse.data.results.length >= 2) {
+          console.log(`Successfully retrieved ${hourlyResponse.data.results.length} hourly data points as fallback`);
+          
+          // Transform the response to match our expected format
+          const prices = hourlyResponse.data.results.map((item: any) => ({
+            c: item.c, // close price
+            h: item.h, // high price
+            l: item.l, // low price
+            n: item.n || 0, // number of transactions
+            o: item.o, // open price
+            t: item.t, // timestamp
+            v: item.v, // trading volume
+            vw: item.vw || item.c, // volume weighted average price
+          }));
+          
+          return { data: { prices } };
+        }
+      }
+    }
+    
+    // If we have results or the fallback didn't work, proceed with the original data
+    const prices = (response.data.results || []).map((item: any) => ({
       c: item.c, // close price
       h: item.h, // high price
       l: item.l, // low price

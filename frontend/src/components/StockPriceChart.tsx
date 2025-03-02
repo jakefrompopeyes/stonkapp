@@ -150,10 +150,13 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ ticker, onPeriodChang
         // Extend the date range to get more data points
         switch (selectedPeriod) {
           case '1D':
-            // For 1D, use minute data with 10-minute intervals (doubled from 5 minutes to reduce points by half)
+            // For 1D, use minute data with 5-minute intervals
             timespan = 'minute';
-            multiplier = 10;
-            fromDate.setDate(toDate.getDate() - 1);
+            multiplier = 5;
+            // Set the date range to exactly 24 hours
+            fromDate = new Date(toDate.getTime() - 24 * 60 * 60 * 1000);
+            // Add a note in debug text about the 1D view
+            debugText += `1D view: Using ${timespan} data with multiplier=${multiplier}. API will fall back to hourly data if needed.\n`;
             break;
           case '1W':
             // For 1W, use hourly data
@@ -278,8 +281,8 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ ticker, onPeriodChang
             if (pointsPerGap > 0) {
               debugText += `Generating smooth line with ${pointsPerGap} points per segment...\n`;
               finalData = generateSmoothLine(filteredData, pointsPerGap);
-              debugText += `After smoothing: ${finalData.length} data points.\n`;
-            } else {
+          debugText += `After smoothing: ${finalData.length} data points.\n`;
+        } else {
               finalData = filteredData;
               debugText += `Using ${filteredData.length} real data points without smoothing (not enough gaps to add points).\n`;
             }
