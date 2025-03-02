@@ -297,6 +297,16 @@ export default function StockDetailPage() {
                 <div>
                   <h1 className="text-2xl font-bold">{stockDetails.name} ({stockDetails.ticker})</h1>
                   <p className="text-gray-600">{stockDetails.market} · {stockDetails.locale}</p>
+                  {latestPrice && (
+                    <div className="mt-1">
+                      <span className="text-2xl font-bold">${latestPrice.c.toFixed(2)}</span>
+                      {priceChange && (
+                        <span className={`ml-2 ${priceChange.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {priceChange.amount >= 0 ? '+' : ''}{priceChange.amount.toFixed(2)} ({priceChange.amount >= 0 ? '+' : ''}{priceChange.percentage.toFixed(2)}%)
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               
