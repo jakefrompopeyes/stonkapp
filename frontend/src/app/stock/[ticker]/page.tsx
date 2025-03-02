@@ -31,10 +31,6 @@ export default function StockDetailPage() {
   const [limitReached, setLimitReached] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [favoriteLoading, setFavoriteLoading] = useState<boolean>(false);
-  const [showCommentModal, setShowCommentModal] = useState<boolean>(false);
-  const [comment, setComment] = useState<string>('');
-  const [commentSubmitting, setCommentSubmitting] = useState<boolean>(false);
-  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -220,49 +216,6 @@ export default function StockDetailPage() {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  // Handle comment submission
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      setCommentError('Please sign in to share a comment');
-      return;
-    }
-    
-    if (!comment.trim()) {
-      setCommentError('Please enter a comment');
-      return;
-    }
-    
-    setCommentSubmitting(true);
-    setCommentError(null);
-    
-    try {
-      const { error } = await supabase
-        .from('stock_comments')
-        .insert({
-          user_id: user.id,
-          ticker: ticker as string,
-          comment: comment.trim(),
-          stock_name: stockDetails?.name || ''
-        });
-      
-      if (error) throw error;
-      
-      // Clear form and close modal on success
-      setComment('');
-      setShowCommentModal(false);
-      
-      // Show success message (you could add a toast notification here)
-      console.log('Comment shared successfully');
-    } catch (err: any) {
-      console.error('Error sharing comment:', err);
-      setCommentError('Failed to share your comment. Please try again later.');
-    } finally {
-      setCommentSubmitting(false);
-    }
   };
 
   if (loading) {
@@ -510,105 +463,6 @@ export default function StockDetailPage() {
             </div>
           )}
         </>
-      )}
-      
-      {/* Comment Button - Fixed in bottom right corner */}
-      <div className="fixed bottom-6 right-6 z-10">
-        <button
-          onClick={() => setShowCommentModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center transition-all"
-          title="Share a comment"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-6 w-6" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
-            />
-          </svg>
-        </button>
-      </div>
-      
-      {/* Comment Modal */}
-      {showCommentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">
-                Share a Comment on {ticker}
-              </h3>
-              <button 
-                onClick={() => setShowCommentModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {!user && (
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-                Please <Link href="/auth/signin" className="underline font-semibold">sign in</Link> to share a comment.
-              </div>
-            )}
-            
-            {commentError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {commentError}
-              </div>
-            )}
-            
-            <form onSubmit={handleCommentSubmit}>
-              <div className="mb-4">
-                <label htmlFor="comment" className="block text-gray-700 text-sm font-medium mb-2">
-                  Your comment
-                </label>
-                <textarea
-                  id="comment"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  placeholder="Share your thoughts on this stock..."
-                  disabled={!user || commentSubmitting}
-                ></textarea>
-              </div>
-              
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowCommentModal(false)}
-                  className="mr-2 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                  disabled={commentSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-                  disabled={!user || commentSubmitting}
-                >
-                  {commentSubmitting ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
-                      Sharing...
-                    </>
-                  ) : (
-                    'Share Comment'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
       
       <ViewLimitPopup 
