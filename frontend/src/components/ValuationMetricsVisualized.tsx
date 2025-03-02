@@ -652,25 +652,25 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td className="py-2 px-4 border-t">Revenue</td>
-              <td className="py-2 px-4 border-t text-right text-blue-400">{formatLargeNumber(metrics.revenue)}</td>
+            <tr className="bg-blue-50">
+              <td className="py-2 px-4 border-t font-medium">Revenue</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-blue-700">{formatLargeNumber(metrics.revenue)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Cost of Revenue</td>
-              <td className="py-2 px-4 border-t text-right text-red-500">-{formatLargeNumber(metrics.costOfRevenue)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.costOfRevenue)}</td>
             </tr>
-            <tr className="bg-gray-50">
+            <tr className="bg-green-50">
               <td className="py-2 px-4 border-t font-medium">Gross Profit</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-400">{formatLargeNumber(metrics.grossProfit)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-700">{formatLargeNumber(metrics.grossProfit)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Operating Expenses</td>
-              <td className="py-2 px-4 border-t text-right text-red-500">-{formatLargeNumber(metrics.operatingExpenses)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.operatingExpenses)}</td>
             </tr>
-            <tr className="bg-gray-50">
+            <tr className="bg-green-50">
               <td className="py-2 px-4 border-t font-medium">Net Income</td>
-              <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netIncome >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+              <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                 {metrics.netIncome >= 0 ? '' : '-'}{formatLargeNumber(Math.abs(metrics.netIncome))}
               </td>
             </tr>
