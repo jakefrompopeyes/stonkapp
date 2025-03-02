@@ -656,7 +656,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
               <td className="py-2 px-4 border-t font-medium">Revenue</td>
               <td className="py-2 px-4 border-t text-right font-medium text-blue-700">{formatLargeNumber(metrics.revenue)}</td>
             </tr>
-            <tr>
+            <tr className="bg-red-50">
               <td className="py-2 px-4 border-t">Cost of Revenue</td>
               <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.costOfRevenue)}</td>
             </tr>
@@ -664,11 +664,11 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
               <td className="py-2 px-4 border-t font-medium">Gross Profit</td>
               <td className="py-2 px-4 border-t text-right font-medium text-green-700">{formatLargeNumber(metrics.grossProfit)}</td>
             </tr>
-            <tr>
+            <tr className="bg-red-50">
               <td className="py-2 px-4 border-t">Operating Expenses</td>
               <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.operatingExpenses)}</td>
             </tr>
-            <tr className="bg-green-50">
+            <tr className={`${metrics.netIncome >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
               <td className="py-2 px-4 border-t font-medium">Net Income</td>
               <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                 {metrics.netIncome >= 0 ? '' : '-'}{formatLargeNumber(Math.abs(metrics.netIncome))}
