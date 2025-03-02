@@ -192,8 +192,8 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({ ticker, onPeriodChang
             fromDate.setFullYear(toDate.getFullYear() - 1);
             break;
           case '5Y':
-            // For 5Y, use monthly data instead of weekly to reduce data points
-            timespan = 'month';
+            // For 5Y, use weekly data instead of monthly to get more accurate pricing
+            timespan = 'week';
             multiplier = 1;
             fromDate.setFullYear(toDate.getFullYear() - 5);
             break;
