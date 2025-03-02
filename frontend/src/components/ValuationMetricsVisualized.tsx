@@ -651,7 +651,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <tbody>
             <tr>
               <td className="py-2 px-4 border-t">Revenue</td>
-              <td className="py-2 px-4 border-t text-right">{formatLargeNumber(metrics.revenue)}</td>
+              <td className="py-2 px-4 border-t text-right text-blue-400">{formatLargeNumber(metrics.revenue)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Cost of Revenue</td>
@@ -659,7 +659,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
             </tr>
             <tr className="bg-gray-50">
               <td className="py-2 px-4 border-t font-medium">Gross Profit</td>
-              <td className="py-2 px-4 border-t text-right font-medium">{formatLargeNumber(metrics.grossProfit)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-400">{formatLargeNumber(metrics.grossProfit)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Operating Expenses</td>
@@ -667,7 +667,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
             </tr>
             <tr className="bg-gray-50">
               <td className="py-2 px-4 border-t font-medium">Net Income</td>
-              <td className="py-2 px-4 border-t text-right font-medium">{formatLargeNumber(metrics.netIncome)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-400">{formatLargeNumber(metrics.netIncome)}</td>
             </tr>
           </tbody>
         </table>
