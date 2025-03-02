@@ -312,14 +312,14 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
             negativeColor, // Cost of Revenue - Red
             positiveColor, // Gross Profit - Green
             negativeColor, // Operating Expenses - Red
-            positiveColor, // Net Income - Green
+            netIncome >= 0 ? positiveColor : negativeColor, // Net Income - Green if positive, Red if negative
           ],
           borderColor: [
             '#2563EB', // Revenue - Blue border
             '#DC2626', // Cost of Revenue - Red border
             '#059669', // Gross Profit - Green border
             '#DC2626', // Operating Expenses - Red border
-            '#059669', // Net Income - Green border
+            netIncome >= 0 ? '#059669' : '#DC2626', // Net Income - Green border if positive, Red border if negative
           ],
           borderWidth: 1,
           borderRadius: 4,
@@ -667,7 +667,9 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
             </tr>
             <tr className="bg-gray-50">
               <td className="py-2 px-4 border-t font-medium">Net Income</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-400">{formatLargeNumber(metrics.netIncome)}</td>
+              <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netIncome >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+                {metrics.netIncome >= 0 ? '' : '-'}{formatLargeNumber(Math.abs(metrics.netIncome))}
+              </td>
             </tr>
           </tbody>
         </table>
