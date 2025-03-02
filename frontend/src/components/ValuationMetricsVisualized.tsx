@@ -644,11 +644,11 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
   const renderIncomeStatementTable = () => {
     return (
       <div className="overflow-x-auto mt-4">
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 text-left">Metric</th>
-              <th className="py-2 px-4 text-right">Value</th>
+              <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
             </tr>
           </thead>
           <tbody>
@@ -669,8 +669,8 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
               <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.operatingExpenses)}</td>
             </tr>
             <tr className={`${metrics.netIncome >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-              <td className="py-2 px-4 border-t font-medium">Net Income</td>
-              <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Net Income</td>
+              <td className={`py-2 px-4 border-t text-right font-medium rounded-br-lg ${metrics.netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                 {metrics.netIncome >= 0 ? '' : '-'}{formatLargeNumber(Math.abs(metrics.netIncome))}
               </td>
             </tr>
@@ -684,11 +684,11 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
   const renderBalanceSheetTable = () => {
     return (
       <div className="overflow-x-auto mt-4">
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 text-left">Metric</th>
-              <th className="py-2 px-4 text-right">Value</th>
+              <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
             </tr>
           </thead>
           <tbody>
@@ -717,8 +717,8 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
               <td className="py-2 px-4 border-t text-right text-red-600">{formatLargeNumber(metrics.nonCurrentLiabilities)}</td>
             </tr>
             <tr className="bg-green-50">
-              <td className="py-2 px-4 border-t font-medium">Shareholders' Equity</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-700">{formatLargeNumber(metrics.equity)}</td>
+              <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Shareholders' Equity</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-700 rounded-br-lg">{formatLargeNumber(metrics.equity)}</td>
             </tr>
           </tbody>
         </table>
@@ -730,11 +730,11 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
   const renderCashFlowTable = () => {
     return (
       <div className="overflow-x-auto mt-4">
-        <table className="min-w-full bg-white">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 text-left">Metric</th>
-              <th className="py-2 px-4 text-right">Value</th>
+              <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
             </tr>
           </thead>
           <tbody>
@@ -761,8 +761,8 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
               </td>
             </tr>
             <tr className="bg-blue-50">
-              <td className="py-2 px-4 border-t font-medium">Free Cash Flow</td>
-              <td className={`py-2 px-4 border-t text-right font-medium ${metrics.freeCashFlow < 0 ? 'text-red-600' : 'text-blue-600'}`}>
+              <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Free Cash Flow</td>
+              <td className={`py-2 px-4 border-t text-right font-medium rounded-br-lg ${metrics.freeCashFlow < 0 ? 'text-red-600' : 'text-blue-600'}`}>
                 {formatLargeNumber(metrics.freeCashFlow)}
               </td>
             </tr>
