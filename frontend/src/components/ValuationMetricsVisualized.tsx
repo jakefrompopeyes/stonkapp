@@ -648,7 +648,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <thead>
             <tr className="bg-gray-100">
               <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
-              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg"></th>
             </tr>
           </thead>
           <tbody>
@@ -688,7 +688,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <thead>
             <tr className="bg-gray-100">
               <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
-              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg"></th>
             </tr>
           </thead>
           <tbody>
@@ -734,7 +734,7 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <thead>
             <tr className="bg-gray-100">
               <th className="py-2 px-4 text-left rounded-tl-lg">Metric</th>
-              <th className="py-2 px-4 text-right rounded-tr-lg">Value</th>
+              <th className="py-2 px-4 text-right rounded-tr-lg"></th>
             </tr>
           </thead>
           <tbody>
