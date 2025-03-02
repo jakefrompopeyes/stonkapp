@@ -654,24 +654,24 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <tbody>
             <tr className="bg-blue-50">
               <td className="py-2 px-4 border-t font-medium">Revenue</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-blue-700">{formatLargeNumber(metrics.revenue)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-blue-700">${formatLargeNumber(metrics.revenue)}</td>
             </tr>
             <tr className="bg-red-50">
               <td className="py-2 px-4 border-t">Cost of Revenue</td>
-              <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.costOfRevenue)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">-${formatLargeNumber(metrics.costOfRevenue)}</td>
             </tr>
             <tr className="bg-green-50">
               <td className="py-2 px-4 border-t font-medium">Gross Profit</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-700">{formatLargeNumber(metrics.grossProfit)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-700">${formatLargeNumber(metrics.grossProfit)}</td>
             </tr>
             <tr className="bg-red-50">
               <td className="py-2 px-4 border-t">Operating Expenses</td>
-              <td className="py-2 px-4 border-t text-right text-red-600">-{formatLargeNumber(metrics.operatingExpenses)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">-${formatLargeNumber(metrics.operatingExpenses)}</td>
             </tr>
             <tr className={`${metrics.netIncome >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
               <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Net Income</td>
               <td className={`py-2 px-4 border-t text-right font-medium rounded-br-lg ${metrics.netIncome >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {metrics.netIncome >= 0 ? '' : '-'}{formatLargeNumber(Math.abs(metrics.netIncome))}
+                {metrics.netIncome >= 0 ? '$' : '-$'}{formatLargeNumber(Math.abs(metrics.netIncome))}
               </td>
             </tr>
           </tbody>
@@ -694,31 +694,31 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <tbody>
             <tr className="bg-blue-50">
               <td className="py-2 px-4 border-t font-medium">Total Assets</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-blue-700">{formatLargeNumber(metrics.assets)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-blue-700">${formatLargeNumber(metrics.assets)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t pl-8">Current Assets</td>
-              <td className="py-2 px-4 border-t text-right text-blue-600">{formatLargeNumber(metrics.currentAssets)}</td>
+              <td className="py-2 px-4 border-t text-right text-blue-600">${formatLargeNumber(metrics.currentAssets)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t pl-8">Non-Current Assets</td>
-              <td className="py-2 px-4 border-t text-right text-blue-600">{formatLargeNumber(metrics.nonCurrentAssets)}</td>
+              <td className="py-2 px-4 border-t text-right text-blue-600">${formatLargeNumber(metrics.nonCurrentAssets)}</td>
             </tr>
             <tr className="bg-red-50">
               <td className="py-2 px-4 border-t font-medium">Total Liabilities</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-red-700">{formatLargeNumber(metrics.liabilities)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-red-700">${formatLargeNumber(metrics.liabilities)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t pl-8">Current Liabilities</td>
-              <td className="py-2 px-4 border-t text-right text-red-600">{formatLargeNumber(metrics.currentLiabilities)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">${formatLargeNumber(metrics.currentLiabilities)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t pl-8">Non-Current Liabilities</td>
-              <td className="py-2 px-4 border-t text-right text-red-600">{formatLargeNumber(metrics.nonCurrentLiabilities)}</td>
+              <td className="py-2 px-4 border-t text-right text-red-600">${formatLargeNumber(metrics.nonCurrentLiabilities)}</td>
             </tr>
             <tr className="bg-green-50">
               <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Shareholders' Equity</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-700 rounded-br-lg">{formatLargeNumber(metrics.equity)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-700 rounded-br-lg">${formatLargeNumber(metrics.equity)}</td>
             </tr>
           </tbody>
         </table>
@@ -740,30 +740,30 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
           <tbody>
             <tr className="bg-green-50">
               <td className="py-2 px-4 border-t font-medium">Operating Cash Flow</td>
-              <td className="py-2 px-4 border-t text-right font-medium text-green-700">{formatLargeNumber(metrics.operatingCashFlow)}</td>
+              <td className="py-2 px-4 border-t text-right font-medium text-green-700">${formatLargeNumber(metrics.operatingCashFlow)}</td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Investing Cash Flow</td>
               <td className={`py-2 px-4 border-t text-right ${metrics.investingCashFlow < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                {formatLargeNumber(metrics.investingCashFlow)}
+                {metrics.investingCashFlow < 0 ? '-$' : '$'}{formatLargeNumber(Math.abs(metrics.investingCashFlow))}
               </td>
             </tr>
             <tr>
               <td className="py-2 px-4 border-t">Financing Cash Flow</td>
               <td className={`py-2 px-4 border-t text-right ${metrics.financingCashFlow < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                {formatLargeNumber(metrics.financingCashFlow)}
+                {metrics.financingCashFlow < 0 ? '-$' : '$'}{formatLargeNumber(Math.abs(metrics.financingCashFlow))}
               </td>
             </tr>
             <tr className="bg-gray-50">
               <td className="py-2 px-4 border-t font-medium">Net Cash Flow</td>
               <td className={`py-2 px-4 border-t text-right font-medium ${metrics.netCashFlow < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {formatLargeNumber(metrics.netCashFlow)}
+                {metrics.netCashFlow < 0 ? '-$' : '$'}{formatLargeNumber(Math.abs(metrics.netCashFlow))}
               </td>
             </tr>
             <tr className="bg-blue-50">
               <td className="py-2 px-4 border-t font-medium rounded-bl-lg">Free Cash Flow</td>
               <td className={`py-2 px-4 border-t text-right font-medium rounded-br-lg ${metrics.freeCashFlow < 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                {formatLargeNumber(metrics.freeCashFlow)}
+                {metrics.freeCashFlow < 0 ? '-$' : '$'}{formatLargeNumber(Math.abs(metrics.freeCashFlow))}
               </td>
             </tr>
           </tbody>
