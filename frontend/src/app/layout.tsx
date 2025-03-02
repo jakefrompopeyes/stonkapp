@@ -31,12 +31,14 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <Header />
-          <main className="container mx-auto p-4">
-            {children}
-          </main>
-          <Footer />
-          <FeedbackButton />
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="container mx-auto p-4 flex-grow">
+              {children}
+            </main>
+            <Footer />
+            <FeedbackButton />
+          </div>
         </AuthProvider>
       </body>
     </html>
