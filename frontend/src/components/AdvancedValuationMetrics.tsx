@@ -6,7 +6,7 @@ import {
   getFinancialRatiosTTM,
   getCompanyRating,
   getFinancialScore,
-  getEnterpriseValue
+  getCompanyProfile
 } from '@/lib/fmpApi';
 
 interface AdvancedValuationMetricsProps {
@@ -15,21 +15,20 @@ interface AdvancedValuationMetricsProps {
 
 interface ValuationData {
   // Key Metrics TTM
-  peRatio?: number;
-  pbRatio?: number;
-  evToEbitda?: number;
-  evToRevenue?: number;
-  currentRatio?: number;
-  quickRatio?: number;
-  debtToEquity?: number;
-  debtToAssets?: number;
+  peRatioTTM?: number;
+  priceToBookRatioTTM?: number;
+  evToEBITDATTM?: number;
+  evToRevenueTTM?: number;
+  currentRatioTTM?: number;
+  quickRatioTTM?: number;
+  debtToEquityTTM?: number;
+  debtToAssetsTTM?: number;
   
   // Financial Ratios TTM
-  returnOnEquity?: number;
-  returnOnAssets?: number;
-  operatingMargin?: number;
-  netProfitMargin?: number;
-  assetTurnover?: number;
+  returnOnEquityTTM?: number;
+  returnOnAssetsTTM?: number;
+  operatingProfitMarginTTM?: number;
+  netProfitMarginTTM?: number;
   
   // Company Rating
   rating?: string;
@@ -40,9 +39,9 @@ interface ValuationData {
   altmanZScore?: number;
   piotroskiScore?: number;
   
-  // Enterprise Value
+  // Company Profile
+  mktCap?: number;
   enterpriseValue?: number;
-  marketCap?: number;
 }
 
 const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ ticker }) => {
@@ -62,32 +61,31 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           ratios,
           rating,
           score,
-          enterpriseValue
+          profile
         ] = await Promise.all([
           getKeyMetricsTTM(ticker),
           getFinancialRatiosTTM(ticker),
           getCompanyRating(ticker),
           getFinancialScore(ticker),
-          getEnterpriseValue(ticker)
+          getCompanyProfile(ticker)
         ]);
 
         setValuationData({
           // Key Metrics TTM
-          peRatio: keyMetrics?.peRatio,
-          pbRatio: keyMetrics?.pbRatio,
-          evToEbitda: keyMetrics?.enterpriseValueOverEBITDA,
-          evToRevenue: keyMetrics?.enterpriseValueOverRevenue,
-          currentRatio: keyMetrics?.currentRatio,
-          quickRatio: keyMetrics?.quickRatio,
-          debtToEquity: keyMetrics?.debtToEquity,
-          debtToAssets: keyMetrics?.debtToAssets,
+          peRatioTTM: keyMetrics?.peRatioTTM,
+          priceToBookRatioTTM: keyMetrics?.pbRatioTTM,
+          evToEBITDATTM: keyMetrics?.enterpriseValueOverEBITDATTM,
+          evToRevenueTTM: keyMetrics?.evToRevenueTTM,
+          currentRatioTTM: keyMetrics?.currentRatioTTM,
+          quickRatioTTM: keyMetrics?.quickRatioTTM,
+          debtToEquityTTM: keyMetrics?.debtToEquityTTM,
+          debtToAssetsTTM: keyMetrics?.debtToAssetsTTM,
           
           // Financial Ratios TTM
-          returnOnEquity: ratios?.returnOnEquity,
-          returnOnAssets: ratios?.returnOnAssets,
-          operatingMargin: ratios?.operatingMargin,
-          netProfitMargin: ratios?.netProfitMargin,
-          assetTurnover: ratios?.assetTurnover,
+          returnOnEquityTTM: ratios?.returnOnEquityTTM,
+          returnOnAssetsTTM: ratios?.returnOnAssetsTTM,
+          operatingProfitMarginTTM: ratios?.operatingProfitMarginTTM,
+          netProfitMarginTTM: ratios?.netProfitMarginTTM,
           
           // Company Rating
           rating: rating?.rating,
@@ -98,9 +96,9 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           altmanZScore: score?.altmanZScore,
           piotroskiScore: score?.piotroskiScore,
           
-          // Enterprise Value
-          enterpriseValue: enterpriseValue?.enterpriseValue,
-          marketCap: enterpriseValue?.marketCapitalization
+          // Company Profile
+          mktCap: profile?.mktCap,
+          enterpriseValue: profile?.enterpriseValue
         });
       } catch (err) {
         console.error('Error fetching valuation data:', err);
@@ -165,19 +163,19 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">P/E Ratio</span>
-              <span className="font-medium">{formatNumber(valuationData.peRatio)}</span>
+              <span className="font-medium">{formatNumber(valuationData.peRatioTTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">P/B Ratio</span>
-              <span className="font-medium">{formatNumber(valuationData.pbRatio)}</span>
+              <span className="font-medium">{formatNumber(valuationData.priceToBookRatioTTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">EV/EBITDA</span>
-              <span className="font-medium">{formatNumber(valuationData.evToEbitda)}</span>
+              <span className="font-medium">{formatNumber(valuationData.evToEBITDATTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">EV/Revenue</span>
-              <span className="font-medium">{formatNumber(valuationData.evToRevenue)}</span>
+              <span className="font-medium">{formatNumber(valuationData.evToRevenueTTM)}</span>
             </div>
           </div>
         </div>
@@ -188,19 +186,19 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Current Ratio</span>
-              <span className="font-medium">{formatNumber(valuationData.currentRatio)}</span>
+              <span className="font-medium">{formatNumber(valuationData.currentRatioTTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Quick Ratio</span>
-              <span className="font-medium">{formatNumber(valuationData.quickRatio)}</span>
+              <span className="font-medium">{formatNumber(valuationData.quickRatioTTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Debt/Equity</span>
-              <span className="font-medium">{formatNumber(valuationData.debtToEquity)}</span>
+              <span className="font-medium">{formatNumber(valuationData.debtToEquityTTM)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Debt/Assets</span>
-              <span className="font-medium">{formatNumber(valuationData.debtToAssets)}</span>
+              <span className="font-medium">{formatNumber(valuationData.debtToAssetsTTM)}</span>
             </div>
           </div>
         </div>
@@ -211,19 +209,19 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">ROE</span>
-              <span className="font-medium">{formatNumber(valuationData.returnOnEquity, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(valuationData.returnOnEquityTTM, 2, '%')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ROA</span>
-              <span className="font-medium">{formatNumber(valuationData.returnOnAssets, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(valuationData.returnOnAssetsTTM, 2, '%')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Operating Margin</span>
-              <span className="font-medium">{formatNumber(valuationData.operatingMargin, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(valuationData.operatingProfitMarginTTM, 2, '%')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Net Margin</span>
-              <span className="font-medium">{formatNumber(valuationData.netProfitMargin, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(valuationData.netProfitMarginTTM, 2, '%')}</span>
             </div>
           </div>
         </div>
@@ -276,7 +274,7 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Market Cap</span>
-              <span className="font-medium">${formatLargeNumber(valuationData.marketCap)}</span>
+              <span className="font-medium">${formatLargeNumber(valuationData.mktCap)}</span>
             </div>
           </div>
         </div>
