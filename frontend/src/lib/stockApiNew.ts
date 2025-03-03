@@ -533,16 +533,23 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     
     const data = await response.json();
     
-    // Import the FMP API function to get book value
+    // Import the FMP API function to get key metrics
     const { getKeyMetricsTTM } = await import('@/lib/fmpApi');
     
-    // Fetch book value data from FMP API
+    // Fetch key metrics data from FMP API
     const keyMetrics = await getKeyMetricsTTM(ticker);
     
-    // Calculate book value if we have price and P/B ratio
+    // Get book value directly from FMP API
     let bookValue: number | undefined = undefined;
-    if (keyMetrics?.pbRatioTTM && data.metric?.price) {
-      bookValue = data.metric.price / keyMetrics.pbRatioTTM;
+    if (keyMetrics?.bookValuePerShare) {
+      // If we have bookValuePerShare, we can calculate total book value
+      // by multiplying by shares outstanding (if available)
+      if (data.metric?.sharesOutstanding) {
+        bookValue = keyMetrics.bookValuePerShare * data.metric.sharesOutstanding;
+      } else {
+        // If shares outstanding is not available, we'll just use bookValuePerShare
+        bookValue = keyMetrics.bookValuePerShare;
+      }
     }
     
     // Extract the metrics we need
