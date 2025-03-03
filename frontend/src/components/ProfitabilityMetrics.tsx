@@ -39,6 +39,17 @@ interface ProfitabilityData {
   netProfitMarginTTM?: number;
 }
 
+/**
+ * ProfitabilityMetrics Component
+ * 
+ * Displays key profitability metrics for a company:
+ * - Return on Equity (ROE) = Net Income / Total Stockholder Equity
+ * - Return on Assets (ROA) = Net Income / Total Assets
+ * - Operating Profit Margin = Operating Income / Revenue
+ * - Net Profit Margin = Net Income / Revenue
+ * 
+ * Data is fetched from the FMP API's ratios-ttm endpoint.
+ */
 const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,12 +64,18 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
         // Fetch financial ratios data
         const ratios = await getFinancialRatiosTTM(ticker);
 
+        if (!ratios) {
+          throw new Error('Failed to fetch financial ratios');
+        }
+
+        // The FMP API returns these values as decimals (not percentages)
+        // For example, 0.15 means 15%
         setProfitabilityData({
           // Financial Ratios TTM
-          returnOnEquityTTM: ratios?.returnOnEquityTTM,
-          returnOnAssetsTTM: ratios?.returnOnAssetsTTM,
-          operatingProfitMarginTTM: ratios?.operatingProfitMarginTTM,
-          netProfitMarginTTM: ratios?.netProfitMarginTTM,
+          returnOnEquityTTM: ratios.returnOnEquityTTM,
+          returnOnAssetsTTM: ratios.returnOnAssetsTTM,
+          operatingProfitMarginTTM: ratios.operatingProfitMarginTTM,
+          netProfitMarginTTM: ratios.netProfitMarginTTM,
         });
       } catch (err) {
         console.error('Error fetching profitability data:', err);
@@ -75,16 +92,28 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
 
   const formatNumber = (value: number | undefined, decimals: number = 2, suffix: string = '') => {
     if (value === undefined || value === null) return 'N/A';
+    
+    // Convert to percentage if the value is a decimal and suffix is '%'
+    if (suffix === '%' && Math.abs(value) < 1) {
+      value = value * 100;
+    }
+    
     return `${value.toFixed(decimals)}${suffix}`;
   };
 
   // Prepare data for profitability charts
   const prepareROEChartData = () => {
-    const value = profitabilityData.returnOnEquityTTM || 0;
+    // ROE values from the API are already in decimal form (e.g., 0.15 for 15%)
+    // For the chart, we need to convert to percentage (0-100 scale)
+    const value = profitabilityData.returnOnEquityTTM ? profitabilityData.returnOnEquityTTM * 100 : 0;
+    
+    // Cap at 100% for the chart visualization
+    const cappedValue = Math.min(value, 100);
+    
     return {
       labels: ['ROE', 'Remaining'],
       datasets: [{
-        data: [value, Math.max(0, 100 - value)],
+        data: [cappedValue, Math.max(0, 100 - cappedValue)],
         backgroundColor: [
           '#4F46E5', // Indigo for the value
           '#E5E7EB', // Light gray for the remaining space
@@ -96,11 +125,17 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
   };
 
   const prepareROAChartData = () => {
-    const value = profitabilityData.returnOnAssetsTTM || 0;
+    // ROA values from the API are already in decimal form (e.g., 0.05 for 5%)
+    // For the chart, we need to convert to percentage (0-100 scale)
+    const value = profitabilityData.returnOnAssetsTTM ? profitabilityData.returnOnAssetsTTM * 100 : 0;
+    
+    // Cap at 100% for the chart visualization
+    const cappedValue = Math.min(value, 100);
+    
     return {
       labels: ['ROA', 'Remaining'],
       datasets: [{
-        data: [value, Math.max(0, 100 - value)],
+        data: [cappedValue, Math.max(0, 100 - cappedValue)],
         backgroundColor: [
           '#10B981', // Green for the value
           '#E5E7EB', // Light gray for the remaining space
@@ -112,14 +147,16 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
   };
 
   const prepareMarginsChartData = () => {
+    // Margin values from the API are already in decimal form (e.g., 0.25 for 25%)
+    // For the chart, we need to convert to percentage (0-100 scale)
+    const operatingMargin = profitabilityData.operatingProfitMarginTTM ? profitabilityData.operatingProfitMarginTTM * 100 : 0;
+    const netMargin = profitabilityData.netProfitMarginTTM ? profitabilityData.netProfitMarginTTM * 100 : 0;
+    
     return {
       labels: ['Operating Margin', 'Net Margin'],
       datasets: [{
         label: 'Profit Margins (%)',
-        data: [
-          profitabilityData.operatingProfitMarginTTM || 0,
-          profitabilityData.netProfitMarginTTM || 0
-        ],
+        data: [operatingMargin, netMargin],
         backgroundColor: [
           '#3B82F6', // Blue for operating margin
           '#8B5CF6', // Purple for net margin
@@ -188,6 +225,12 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
     );
   }
 
+  // Convert decimal values to percentages for display
+  const roePercentage = profitabilityData.returnOnEquityTTM ? profitabilityData.returnOnEquityTTM * 100 : undefined;
+  const roaPercentage = profitabilityData.returnOnAssetsTTM ? profitabilityData.returnOnAssetsTTM * 100 : undefined;
+  const operatingMarginPercentage = profitabilityData.operatingProfitMarginTTM ? profitabilityData.operatingProfitMarginTTM * 100 : undefined;
+  const netMarginPercentage = profitabilityData.netProfitMarginTTM ? profitabilityData.netProfitMarginTTM * 100 : undefined;
+
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Profitability Metrics</h2>
@@ -198,7 +241,7 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
           <div className="h-48 relative">
             <Doughnut data={prepareROEChartData()} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold">{formatNumber(profitabilityData.returnOnEquityTTM, 2, '%')}</span>
+              <span className="text-2xl font-bold">{formatNumber(roePercentage, 2, '%')}</span>
             </div>
           </div>
           <p className="mt-4 text-sm text-gray-600 text-center">
@@ -212,7 +255,7 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
           <div className="h-48 relative">
             <Doughnut data={prepareROAChartData()} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold">{formatNumber(profitabilityData.returnOnAssetsTTM, 2, '%')}</span>
+              <span className="text-2xl font-bold">{formatNumber(roaPercentage, 2, '%')}</span>
             </div>
           </div>
           <p className="mt-4 text-sm text-gray-600 text-center">
@@ -229,11 +272,11 @@ const ProfitabilityMetrics: React.FC<ProfitabilityMetricsProps> = ({ ticker }) =
           <div className="mt-4 text-sm text-gray-600 space-y-2">
             <div className="flex justify-between">
               <span>Operating Margin:</span>
-              <span className="font-medium">{formatNumber(profitabilityData.operatingProfitMarginTTM, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(operatingMarginPercentage, 2, '%')}</span>
             </div>
             <div className="flex justify-between">
               <span>Net Margin:</span>
-              <span className="font-medium">{formatNumber(profitabilityData.netProfitMarginTTM, 2, '%')}</span>
+              <span className="font-medium">{formatNumber(netMarginPercentage, 2, '%')}</span>
             </div>
           </div>
         </div>
