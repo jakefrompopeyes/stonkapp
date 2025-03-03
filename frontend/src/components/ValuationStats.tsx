@@ -151,19 +151,19 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         </div>
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(metrics.evToEBITDA ?? null, marketCap, 'EV/EBITDA')} options={chartOptions} />
+            <Doughnut data={createDonutData(metrics.psAnnual ?? null, marketCap, 'PS Annual')} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{metrics.evToEBITDA?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">EV/EBITDA</span>
+              <span className="text-lg font-bold">{metrics.psAnnual?.toFixed(1) || 'N/A'}x</span>
+              <span className="text-xs text-gray-500">PS Annual</span>
             </div>
           </div>
         </div>
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(metrics.psAnnual ?? null, marketCap, 'PS Annual')} options={chartOptions} />
+            <Doughnut data={createDonutData(metrics.evToEBITDA ?? null, marketCap, 'EV/EBITDA')} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{metrics.psAnnual?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">PS Annual</span>
+              <span className="text-lg font-bold">{metrics.evToEBITDA?.toFixed(1) || 'N/A'}x</span>
+              <span className="text-xs text-gray-500">EV/EBITDA</span>
             </div>
           </div>
         </div>
@@ -180,8 +180,8 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
       <div className="mt-4 text-sm text-gray-500">
         <p>Market Cap: {formatLargeNumber(marketCap)}</p>
         <p>PE Ratio: Price to Earnings - Lower values may indicate better value</p>
-        <p>EV/EBITDA: Enterprise Value to EBITDA - Lower values suggest the company might be undervalued</p>
         <p>PS Ratio: Price to Sales - Lower values may indicate better value</p>
+        <p>EV/EBITDA: Enterprise Value to EBITDA - Lower values suggest the company might be undervalued</p>
         <p>EV/Revenue: Enterprise Value to Revenue - Lower values indicate potentially better value</p>
       </div>
     </div>

@@ -125,10 +125,9 @@ export interface InsiderSentiment {
 export interface ValuationMetrics {
   ticker: string;
   peAnnual?: number;
-  evToEBITDA?: number;
   psAnnual?: number;
+  evToEBITDA?: number;
   evToRevenue?: number;
-  // Add other metrics as needed
   [key: string]: any;
 }
 
@@ -536,10 +535,9 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     return {
       ticker: ticker,
       peAnnual: data.metric?.peAnnual,
-      evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       psAnnual: data.metric?.psAnnual,
+      evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
-      // Add other metrics as needed
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
