@@ -8,12 +8,13 @@ interface FinancialHealthVisualized {
 }
 
 interface FinancialMetrics {
-  currentRatioTTM?: number;
-  quickRatioTTM?: number;
-  debtToEquityTTM?: number;
-  debtToAssetsTTM?: number;
-  interestCoverageTTM?: number;
-  cashRatioTTM?: number;
+  // Key Metrics TTM
+  currentRatio?: number;
+  quickRatio?: number;
+  cashRatio?: number;
+  debtToEquityRatio?: number;
+  debtToAssetsRatio?: number;
+  interestCoverageRatio?: number;
 }
 
 const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker }) => {
@@ -32,13 +33,16 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           getFinancialRatiosTTM(ticker)
         ]);
 
+        console.log('Key Metrics:', keyMetrics);
+        console.log('Ratios:', ratios);
+
         setMetrics({
-          currentRatioTTM: keyMetrics?.currentRatioTTM,
-          quickRatioTTM: keyMetrics?.quickRatioTTM,
-          debtToEquityTTM: keyMetrics?.debtToEquityTTM,
-          debtToAssetsTTM: keyMetrics?.debtToAssetsTTM,
-          interestCoverageTTM: ratios?.interestCoverageTTM,
-          cashRatioTTM: keyMetrics?.cashRatioTTM
+          currentRatio: ratios?.currentRatio,
+          quickRatio: ratios?.quickRatio,
+          cashRatio: ratios?.cashRatio,
+          debtToEquityRatio: ratios?.debtEquityRatio,
+          debtToAssetsRatio: ratios?.debtRatio,
+          interestCoverageRatio: ratios?.interestCoverageRatio
         });
       } catch (err) {
         console.error('Error fetching financial health metrics:', err);
@@ -189,28 +193,28 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricGauge
           label="Current Ratio"
-          value={metrics.currentRatioTTM}
+          value={metrics.currentRatio}
           thresholds={{ poor: 1, fair: 1.5, good: 2 }}
           description="Measures ability to pay short-term obligations. Higher is better, with 2.0+ considered healthy."
         />
         
         <MetricGauge
           label="Quick Ratio"
-          value={metrics.quickRatioTTM}
+          value={metrics.quickRatio}
           thresholds={{ poor: 0.5, fair: 0.9, good: 1.2 }}
           description="Similar to current ratio but excludes inventory. Above 1.0 indicates strong liquidity."
         />
         
         <MetricGauge
           label="Cash Ratio"
-          value={metrics.cashRatioTTM}
+          value={metrics.cashRatio}
           thresholds={{ poor: 0.2, fair: 0.5, good: 0.75 }}
           description="Most conservative liquidity ratio. Shows ability to cover short-term liabilities with cash."
         />
         
         <MetricGauge
           label="Debt to Equity"
-          value={metrics.debtToEquityTTM}
+          value={metrics.debtToEquityRatio}
           thresholds={{ poor: 2, fair: 1.5, good: 1 }}
           description="Shows financial leverage. Lower ratios indicate less risk, with under 1.0 considered conservative."
           isInverse={true}
@@ -218,7 +222,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
         
         <MetricGauge
           label="Debt to Assets"
-          value={metrics.debtToAssetsTTM}
+          value={metrics.debtToAssetsRatio}
           thresholds={{ poor: 0.7, fair: 0.5, good: 0.3 }}
           description="Percentage of assets financed by debt. Lower values indicate stronger solvency."
           isInverse={true}
@@ -226,7 +230,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
         
         <MetricGauge
           label="Interest Coverage"
-          value={metrics.interestCoverageTTM}
+          value={metrics.interestCoverageRatio}
           thresholds={{ poor: 1.5, fair: 3, good: 5 }}
           description="Shows ability to pay interest on debt. Higher ratios indicate stronger debt service capability."
         />

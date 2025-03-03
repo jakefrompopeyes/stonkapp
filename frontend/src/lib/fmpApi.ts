@@ -157,7 +157,7 @@ export const getDCFAnalysis = async (ticker: string) => {
 };
 
 /**
- * Get key metrics TTM (Trailing Twelve Months)
+ * Get company key metrics TTM
  */
 export const getKeyMetricsTTM = async (ticker: string) => {
   try {
@@ -179,7 +179,7 @@ export const getKeyMetricsTTM = async (ticker: string) => {
 };
 
 /**
- * Get financial ratios TTM
+ * Get company ratios TTM
  */
 export const getFinancialRatiosTTM = async (ticker: string) => {
   try {
