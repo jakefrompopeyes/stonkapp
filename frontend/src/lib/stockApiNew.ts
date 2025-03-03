@@ -128,6 +128,7 @@ export interface ValuationMetrics {
   psAnnual?: number;
   evToEBITDA?: number;
   evToRevenue?: number;
+  bookValue?: number;
   [key: string]: any;
 }
 
@@ -522,6 +523,7 @@ export const getServerStatus = async (): Promise<string> => {
  */
 export const getValuationMetrics = async (ticker: string): Promise<ValuationMetrics> => {
   try {
+    // Fetch data from Finnhub API
     const response = await fetch(`${FINNHUB_BASE_URL}/stock/metric?symbol=${ticker}&metric=all&token=${FINNHUB_API_KEY}`);
     
     if (!response.ok) {
@@ -531,6 +533,18 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     
     const data = await response.json();
     
+    // Import the FMP API function to get book value
+    const { getKeyMetricsTTM } = await import('@/lib/fmpApi');
+    
+    // Fetch book value data from FMP API
+    const keyMetrics = await getKeyMetricsTTM(ticker);
+    
+    // Calculate book value if we have price and P/B ratio
+    let bookValue: number | undefined = undefined;
+    if (keyMetrics?.pbRatioTTM && data.metric?.price) {
+      bookValue = data.metric.price / keyMetrics.pbRatioTTM;
+    }
+    
     // Extract the metrics we need
     return {
       ticker: ticker,
@@ -538,6 +552,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
+      bookValue: bookValue,
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
