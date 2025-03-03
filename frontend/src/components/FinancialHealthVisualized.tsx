@@ -38,7 +38,17 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           currentRatio: latestRatios?.currentRatio,
           quickRatio: latestRatios?.quickRatio,
           cashRatio: latestRatios?.cashRatio,
-          debtToEquityRatio: latestRatios?.debtToEquity,
+          debtToEquityRatio: latestRatios?.debtEquityRatio,
+          debtToAssetsRatio: latestRatios?.debtRatio,
+          interestCoverageRatio: latestRatios?.interestCoverage
+        });
+
+        // Debug log to check the values
+        console.log('Mapped Metrics:', {
+          currentRatio: latestRatios?.currentRatio,
+          quickRatio: latestRatios?.quickRatio,
+          cashRatio: latestRatios?.cashRatio,
+          debtToEquityRatio: latestRatios?.debtEquityRatio,
           debtToAssetsRatio: latestRatios?.debtRatio,
           interestCoverageRatio: latestRatios?.interestCoverage
         });
