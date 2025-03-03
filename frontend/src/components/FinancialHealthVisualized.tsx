@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getKeyMetricsTTM, getFinancialRatiosTTM } from '@/lib/fmpApi';
+import { getFinancialRatios } from '@/lib/fmpApi';
 
 interface FinancialHealthVisualized {
   ticker: string;
@@ -28,21 +28,19 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
         setLoading(true);
         setError(null);
 
-        const [keyMetrics, ratios] = await Promise.all([
-          getKeyMetricsTTM(ticker),
-          getFinancialRatiosTTM(ticker)
-        ]);
+        const ratios = await getFinancialRatios(ticker);
+        console.log('Financial Ratios:', ratios);
 
-        console.log('Key Metrics:', keyMetrics);
-        console.log('Ratios:', ratios);
+        // Get the most recent period's ratios (first item in the array)
+        const latestRatios = ratios[0];
 
         setMetrics({
-          currentRatio: ratios?.currentRatio,
-          quickRatio: ratios?.quickRatio,
-          cashRatio: ratios?.cashRatio,
-          debtToEquityRatio: ratios?.debtEquityRatio,
-          debtToAssetsRatio: ratios?.debtRatio,
-          interestCoverageRatio: ratios?.interestCoverageRatio
+          currentRatio: latestRatios?.currentRatio,
+          quickRatio: latestRatios?.quickRatio,
+          cashRatio: latestRatios?.cashRatio,
+          debtToEquityRatio: latestRatios?.debtToEquity,
+          debtToAssetsRatio: latestRatios?.debtRatio,
+          interestCoverageRatio: latestRatios?.interestCoverage
         });
       } catch (err) {
         console.error('Error fetching financial health metrics:', err);
