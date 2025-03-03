@@ -191,29 +191,6 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           </div>
         </div>
 
-        {/* Profitability */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-medium mb-3">Profitability</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">ROE</span>
-              <span className="font-medium">{formatNumber(valuationData.returnOnEquityTTM, 2, '%')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">ROA</span>
-              <span className="font-medium">{formatNumber(valuationData.returnOnAssetsTTM, 2, '%')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Operating Margin</span>
-              <span className="font-medium">{formatNumber(valuationData.operatingProfitMarginTTM, 2, '%')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Net Margin</span>
-              <span className="font-medium">{formatNumber(valuationData.netProfitMarginTTM, 2, '%')}</span>
-            </div>
-          </div>
-        </div>
-
         {/* Company Rating */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-lg font-medium mb-3">Company Rating</h3>
@@ -263,6 +240,31 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
             <div className="flex justify-between">
               <span className="text-gray-600">Market Cap</span>
               <span className="font-medium">${formatLargeNumber(valuationData.mktCap)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Profitability - Now as a separate section */}
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-4">Profitability Metrics</h2>
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">ROE</span>
+              <span className="font-medium">{formatNumber(valuationData.returnOnEquityTTM, 2, '%')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">ROA</span>
+              <span className="font-medium">{formatNumber(valuationData.returnOnAssetsTTM, 2, '%')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Operating Margin</span>
+              <span className="font-medium">{formatNumber(valuationData.operatingProfitMarginTTM, 2, '%')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Net Margin</span>
+              <span className="font-medium">{formatNumber(valuationData.netProfitMarginTTM, 2, '%')}</span>
             </div>
           </div>
         </div>
