@@ -1,0 +1,13 @@
+{
+  "name": "stonkapp-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for StonkApp",
+  "main": "give_pro_access.js",
+  "scripts": {
+    "give-pro": "node give_pro_access.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  }
+} 
