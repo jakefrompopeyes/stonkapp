@@ -15,6 +15,8 @@ interface FinancialMetrics {
   debtToEquityRatio?: number;
   debtToAssetsRatio?: number;
   interestCoverageRatio?: number;
+  evToEBITDA?: number;
+  evToRevenue?: number;
 }
 
 const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker }) => {
@@ -40,7 +42,9 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           cashRatio: latestRatios?.cashRatio,
           debtToEquityRatio: latestRatios?.debtEquityRatio,
           debtToAssetsRatio: latestRatios?.debtRatio,
-          interestCoverageRatio: latestRatios?.interestCoverage
+          interestCoverageRatio: latestRatios?.interestCoverage,
+          evToEBITDA: latestRatios?.enterpriseValueMultiple,
+          evToRevenue: latestRatios?.evToSalesRatio
         });
 
         // Debug log to check the values
@@ -50,7 +54,9 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           cashRatio: latestRatios?.cashRatio,
           debtToEquityRatio: latestRatios?.debtEquityRatio,
           debtToAssetsRatio: latestRatios?.debtRatio,
-          interestCoverageRatio: latestRatios?.interestCoverage
+          interestCoverageRatio: latestRatios?.interestCoverage,
+          evToEBITDA: latestRatios?.enterpriseValueMultiple,
+          evToRevenue: latestRatios?.evToSalesRatio
         });
       } catch (err) {
         console.error('Error fetching financial health metrics:', err);
@@ -200,6 +206,22 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricGauge
+          label="EV/EBITDA"
+          value={metrics.evToEBITDA}
+          thresholds={{ poor: 15, fair: 12, good: 8 }}
+          description="Enterprise Value to EBITDA ratio. Lower values suggest the company might be undervalued."
+          isInverse={true}
+        />
+        
+        <MetricGauge
+          label="EV/Revenue"
+          value={metrics.evToRevenue}
+          thresholds={{ poor: 5, fair: 3, good: 1 }}
+          description="Enterprise Value to Revenue ratio. Lower values indicate potentially better value."
+          isInverse={true}
+        />
+        
+        <MetricGauge
           label="Current Ratio"
           value={metrics.currentRatio}
           thresholds={{ poor: 1, fair: 1.5, good: 2 }}
@@ -247,9 +269,10 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <h3 className="text-lg font-medium mb-3">Overall Financial Health</h3>
         <p className="text-sm text-gray-600">
-          This analysis considers multiple aspects of financial health including liquidity (current, quick, and cash ratios), 
-          solvency (debt ratios), and debt service capability (interest coverage). Each metric is color-coded and scored 
-          relative to industry standards, with green indicating strong performance and red indicating potential concerns.
+          This analysis considers multiple aspects including valuation metrics (EV/EBITDA, EV/Revenue), 
+          liquidity (current and quick ratios), and debt management (leverage and coverage ratios). 
+          Each metric is color-coded relative to industry standards, with green indicating strong performance 
+          and red indicating potential concerns.
         </p>
       </div>
     </div>
