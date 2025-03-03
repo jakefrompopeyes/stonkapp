@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { ValuationMetrics, getValuationMetrics, getStockDetails } from '@/lib/stockApi';
+import { getKeyMetrics, getEnterpriseValue } from '@/lib/fmpApi';
 
 // Register Chart.js components
 ChartJS.register(
@@ -27,6 +28,8 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<ValuationMetrics | null>(null);
   const [marketCap, setMarketCap] = useState<number | null>(null);
+  const [evToEBITDA, setEvToEBITDA] = useState<number | null>(null);
+  const [evToRevenue, setEvToRevenue] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,14 +37,41 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         setLoading(true);
         setError(null);
         
-        // Fetch both valuation metrics and stock details in parallel
-        const [metricsData, stockDetails] = await Promise.all([
+        // Fetch valuation metrics, stock details, and FMP metrics in parallel
+        const [metricsData, stockDetails, keyMetrics, enterpriseValue] = await Promise.all([
           getValuationMetrics(ticker),
-          getStockDetails(ticker)
+          getStockDetails(ticker),
+          getKeyMetrics(ticker),
+          getEnterpriseValue(ticker)
         ]);
         
+        console.log('FMP Key Metrics:', keyMetrics);
+        console.log('FMP Enterprise Value:', enterpriseValue);
+        
+        // Set the basic metrics from Finnhub
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
+        
+        // Set the EV/EBITDA and EV/Revenue from FMP
+        if (keyMetrics && enterpriseValue) {
+          // Calculate EV/EBITDA
+          if (keyMetrics.ebitda && enterpriseValue.enterpriseValue) {
+            const evEbitdaRatio = enterpriseValue.enterpriseValue / keyMetrics.ebitda;
+            setEvToEBITDA(evEbitdaRatio);
+            
+            // Update the metrics object with the new value
+            metricsData.evToEBITDA = evEbitdaRatio;
+          }
+          
+          // Calculate EV/Revenue
+          if (keyMetrics.revenue && enterpriseValue.enterpriseValue) {
+            const evRevenueRatio = enterpriseValue.enterpriseValue / keyMetrics.revenue;
+            setEvToRevenue(evRevenueRatio);
+            
+            // Update the metrics object with the new value
+            metricsData.evToRevenue = evRevenueRatio;
+          }
+        }
       } catch (err) {
         console.error('Error fetching valuation data:', err);
         setError('Failed to load valuation metrics');
