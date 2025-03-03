@@ -126,8 +126,6 @@ export interface ValuationMetrics {
   ticker: string;
   peAnnual?: number;
   psAnnual?: number;
-  evToEBITDA?: number;
-  evToRevenue?: number;
   [key: string]: any;
 }
 
@@ -536,8 +534,6 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       ticker: ticker,
       peAnnual: data.metric?.peAnnual,
       psAnnual: data.metric?.psAnnual,
-      evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
-      evToRevenue: data.metric?.enterpriseValueOverRevenue,
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
