@@ -8,17 +8,29 @@ interface FinancialHealthVisualized {
 }
 
 interface FinancialMetrics {
-  // Key Metrics TTM
+  // Liquidity Ratios
   currentRatio?: number;
   quickRatio?: number;
   cashRatio?: number;
+  // Solvency Ratios
   debtToEquityRatio?: number;
   debtToAssetsRatio?: number;
   interestCoverageRatio?: number;
-  evToEBITDA?: number;
-  evToRevenue?: number;
 }
 
+/**
+ * FinancialHealthVisualized Component
+ * 
+ * Displays key financial health metrics for a company:
+ * - Current Ratio = Current Assets / Current Liabilities
+ * - Quick Ratio = (Cash & Equivalents + Short-term Investments + Accounts Receivable) / Current Liabilities
+ * - Cash Ratio = Cash & Equivalents / Current Liabilities
+ * - Debt to Equity Ratio = Long-term Debt / Total Equity
+ * - Debt to Assets Ratio = Long-term Debt / Total Assets
+ * - Interest Coverage Ratio = EBIT / Interest Expense
+ * 
+ * Data is fetched from the FMP API's ratios endpoint.
+ */
 const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,32 +43,25 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
         setError(null);
 
         const ratios = await getFinancialRatios(ticker);
-        console.log('Financial Ratios:', ratios);
+        
+        if (!ratios || ratios.length === 0) {
+          throw new Error('Failed to fetch financial ratios');
+        }
 
         // Get the most recent period's ratios (first item in the array)
         const latestRatios = ratios[0];
 
+        // Map API response to our metrics interface
+        // The FMP API returns these values directly (not as percentages)
         setMetrics({
-          currentRatio: latestRatios?.currentRatio,
-          quickRatio: latestRatios?.quickRatio,
-          cashRatio: latestRatios?.cashRatio,
-          debtToEquityRatio: latestRatios?.debtEquityRatio,
-          debtToAssetsRatio: latestRatios?.debtRatio,
-          interestCoverageRatio: latestRatios?.interestCoverage,
-          evToEBITDA: latestRatios?.enterpriseValueMultiple,
-          evToRevenue: latestRatios?.evToSalesRatio
-        });
-
-        // Debug log to check the values
-        console.log('Mapped Metrics:', {
-          currentRatio: latestRatios?.currentRatio,
-          quickRatio: latestRatios?.quickRatio,
-          cashRatio: latestRatios?.cashRatio,
-          debtToEquityRatio: latestRatios?.debtEquityRatio,
-          debtToAssetsRatio: latestRatios?.debtRatio,
-          interestCoverageRatio: latestRatios?.interestCoverage,
-          evToEBITDA: latestRatios?.enterpriseValueMultiple,
-          evToRevenue: latestRatios?.evToSalesRatio
+          // Liquidity Ratios
+          currentRatio: latestRatios.currentRatio,
+          quickRatio: latestRatios.quickRatio,
+          cashRatio: latestRatios.cashRatio,
+          // Solvency Ratios
+          debtToEquityRatio: latestRatios.debtEquityRatio,
+          debtToAssetsRatio: latestRatios.debtRatio,
+          interestCoverageRatio: latestRatios.interestCoverage
         });
       } catch (err) {
         console.error('Error fetching financial health metrics:', err);
@@ -71,6 +76,14 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     }
   }, [ticker]);
 
+  /**
+   * Calculate a health score based on the metric value and thresholds
+   * 
+   * @param value The metric value
+   * @param thresholds Thresholds for poor, fair, and good ratings
+   * @param isInverse Whether lower values are better (true) or higher values are better (false)
+   * @returns An object with score (0-100) and status (critical, poor, fair, good, unknown)
+   */
   const getHealthScore = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }, isInverse: boolean = false) => {
     if (value === undefined || value === null) return { score: 0, status: 'unknown' };
     
@@ -89,6 +102,9 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     return { score: 0, status: 'critical' };
   };
 
+  /**
+   * Get the CSS class for the status color
+   */
   const getStatusColor = (status: string) => {
     const colors = {
       good: 'bg-green-500',
@@ -100,11 +116,52 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     return colors[status as keyof typeof colors] || colors.unknown;
   };
 
+  /**
+   * Format a number with specified decimal places
+   */
   const formatNumber = (value: number | undefined, decimals: number = 2) => {
     if (value === undefined || value === null) return 'N/A';
     return value.toFixed(decimals);
   };
 
+  /**
+   * Get the CSS class for the text color based on status
+   */
+  const getTextColor = (status: string) => {
+    const colors = {
+      good: 'text-green-600',
+      fair: 'text-yellow-600',
+      poor: 'text-orange-600',
+      critical: 'text-red-600',
+      unknown: 'text-gray-500'
+    };
+    return colors[status as keyof typeof colors] || colors.unknown;
+  };
+
+  /**
+   * Get a descriptive status message based on the metric value
+   */
+  const getMetricStatus = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }, isInverse: boolean) => {
+    if (value === undefined || value === null) return '';
+    
+    if (isInverse) {
+      if (value <= thresholds.good) return 'Strong Position';
+      if (value <= thresholds.fair) return 'Adequate';
+      if (value <= thresholds.poor) return 'Needs Attention';
+      return 'High Risk';
+    }
+    
+    if (value >= thresholds.good) return 'Strong Position';
+    if (value >= thresholds.fair) return 'Adequate';
+    if (value >= thresholds.poor) return 'Needs Attention';
+    return 'High Risk';
+  };
+
+  /**
+   * Metric Gauge Component
+   * 
+   * Displays a single financial metric with a gauge visualization
+   */
   const MetricGauge: React.FC<{
     label: string;
     value: number | undefined;
@@ -150,33 +207,6 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     );
   };
 
-  const getTextColor = (status: string) => {
-    const colors = {
-      good: 'text-green-600',
-      fair: 'text-yellow-600',
-      poor: 'text-orange-600',
-      critical: 'text-red-600',
-      unknown: 'text-gray-500'
-    };
-    return colors[status as keyof typeof colors] || colors.unknown;
-  };
-
-  const getMetricStatus = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }, isInverse: boolean) => {
-    if (value === undefined || value === null) return '';
-    
-    if (isInverse) {
-      if (value <= thresholds.good) return 'Strong Position';
-      if (value <= thresholds.fair) return 'Adequate';
-      if (value <= thresholds.poor) return 'Needs Attention';
-      return 'High Risk';
-    }
-    
-    if (value >= thresholds.good) return 'Strong Position';
-    if (value >= thresholds.fair) return 'Adequate';
-    if (value >= thresholds.poor) return 'Needs Attention';
-    return 'High Risk';
-  };
-
   if (loading) {
     return (
       <div className="p-4 bg-white rounded-lg shadow-md">
@@ -205,22 +235,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
       <h2 className="text-xl font-semibold mb-6">Financial Health Analysis</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <MetricGauge
-          label="EV/EBITDA"
-          value={metrics.evToEBITDA}
-          thresholds={{ poor: 15, fair: 12, good: 8 }}
-          description="Enterprise Value to EBITDA ratio. Lower values suggest the company might be undervalued."
-          isInverse={true}
-        />
-        
-        <MetricGauge
-          label="EV/Revenue"
-          value={metrics.evToRevenue}
-          thresholds={{ poor: 5, fair: 3, good: 1 }}
-          description="Enterprise Value to Revenue ratio. Lower values indicate potentially better value."
-          isInverse={true}
-        />
-        
+        {/* Liquidity Ratios */}
         <MetricGauge
           label="Current Ratio"
           value={metrics.currentRatio}
@@ -242,6 +257,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           description="Most conservative liquidity ratio. Shows ability to cover short-term liabilities with cash."
         />
         
+        {/* Solvency Ratios */}
         <MetricGauge
           label="Debt to Equity"
           value={metrics.debtToEquityRatio}
@@ -269,10 +285,10 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <h3 className="text-lg font-medium mb-3">Overall Financial Health</h3>
         <p className="text-sm text-gray-600">
-          This analysis considers multiple aspects including valuation metrics (EV/EBITDA, EV/Revenue), 
-          liquidity (current and quick ratios), and debt management (leverage and coverage ratios). 
-          Each metric is color-coded relative to industry standards, with green indicating strong performance 
-          and red indicating potential concerns.
+          This analysis considers multiple aspects including liquidity (current and quick ratios), 
+          and debt management (leverage and coverage ratios). Each metric is color-coded relative 
+          to industry standards, with green indicating strong performance and red indicating 
+          potential concerns.
         </p>
       </div>
     </div>

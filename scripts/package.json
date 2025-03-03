@@ -5,7 +5,8 @@
   "main": "give_pro_access.js",
   "scripts": {
     "give-pro": "node give_pro_access.js",
-    "verify-metrics": "node verify_profitability_metrics.js"
+    "verify-metrics": "node verify_profitability_metrics.js",
+    "verify-health": "node verify_financial_health_metrics.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",

@@ -110,4 +110,61 @@ The script will output a comparison between the API values and the manually calc
 
 - Make sure your `.env` file is correctly configured with a valid FMP API key
 - Verify that the ticker symbol is valid
+- Check if the company has published recent financial statements
+
+## Verify Financial Health Metrics Script
+
+### Purpose
+
+This script verifies the financial health metrics calculations by comparing the values from the FMP API's `ratios` endpoint with manually calculated values from financial statements.
+
+### Prerequisites
+
+- Node.js installed
+- Create a `.env` file in the scripts directory with the following variables:
+  ```
+  NEXT_PUBLIC_FMP_API_KEY=your_fmp_api_key
+  ```
+
+### Usage
+
+Run the following command to verify financial health metrics for a specific ticker:
+
+```
+npm run verify-health -- <ticker>
+```
+
+Replace `<ticker>` with the stock ticker you want to verify. If no ticker is provided, it defaults to 'AAPL'.
+
+Example:
+```
+npm run verify-health -- MSFT
+```
+
+### What the Script Does
+
+1. Fetches financial ratios data from the FMP API
+2. Fetches the latest balance sheet and income statement data
+3. Calculates the following metrics manually:
+   - Current Ratio = Current Assets / Current Liabilities
+   - Quick Ratio = (Cash & Equivalents + Short-term Investments + Accounts Receivable) / Current Liabilities
+   - Cash Ratio = Cash & Equivalents / Current Liabilities
+   - Debt to Equity Ratio = Long-term Debt / Total Equity
+   - Debt to Assets Ratio = Long-term Debt / Total Assets
+   - Interest Coverage Ratio = EBIT / Interest Expense
+4. Compares the API values with the manually calculated values
+5. Displays the raw data used for calculations
+
+### Understanding the Results
+
+The script will output a comparison between the API values and the manually calculated values. If there are discrepancies, it could be due to:
+
+1. Different calculation methodologies (e.g., using total liabilities instead of just long-term debt)
+2. Adjustments made by the API provider to the raw financial data
+3. Different time periods (the API might use quarterly data while the manual calculation uses annual data)
+
+### Troubleshooting
+
+- Make sure your `.env` file is correctly configured with a valid FMP API key
+- Verify that the ticker symbol is valid
 - Check if the company has published recent financial statements 
