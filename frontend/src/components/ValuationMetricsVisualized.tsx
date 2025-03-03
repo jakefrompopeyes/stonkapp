@@ -267,36 +267,30 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
     // Define our key values
     const revenue = metrics.revenue;
     const costOfRevenue = metrics.costOfRevenue;
-    const grossProfit = metrics.grossProfit;
+    const grossProfit = revenue - costOfRevenue;
     const operatingExpenses = metrics.operatingExpenses;
-    const netIncome = metrics.netIncome;
-    
-    // Calculate running totals for the waterfall chart
-    let runningTotal = 0;
+    const netIncome = grossProfit - operatingExpenses;
     
     // For Revenue, start at 0 and end at revenue value
     const revenueBar = [0, revenue];
-    runningTotal = revenue;
     
-    // For Cost of Revenue, start at running total and end at running total - cost
-    const costOfRevenueBar = [runningTotal, runningTotal - costOfRevenue];
-    runningTotal -= costOfRevenue;
+    // For Cost of Revenue, start at revenue and subtract cost
+    const costOfRevenueBar = [revenue, revenue - costOfRevenue];
     
-    // For Gross Profit, this is just a marker at the current running total
-    const grossProfitBar = runningTotal;
+    // For Gross Profit, this is just a marker at revenue - costOfRevenue
+    const grossProfitBar = grossProfit;
     
-    // For Operating Expenses, start at running total and end at running total - expenses
-    const operatingExpensesBar = [runningTotal, runningTotal - operatingExpenses];
-    runningTotal -= operatingExpenses;
+    // For Operating Expenses, start at gross profit and subtract expenses
+    const operatingExpensesBar = [grossProfit, grossProfit - operatingExpenses];
     
-    // For Net Income, this is just a marker at the current running total
-    const netIncomeBar = runningTotal;
+    // For Net Income, this is just a marker at the final value
+    const netIncomeBar = netIncome;
     
     // Define colors for positive and negative values
     const positiveColor = '#10B981'; // Green
     const negativeColor = '#EF4444'; // Red
     const neutralColor = '#6B7280'; // Gray for markers
-    const blueColor = '#3B82F6'; // Blue for Revenue
+    const blueColor = '#3B82F6';
     
     return {
       labels: ['Revenue', 'Cost of Revenue', 'Gross Profit', 'Operating Expenses', 'Net Income'],
