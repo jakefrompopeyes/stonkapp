@@ -125,9 +125,9 @@ export interface InsiderSentiment {
 export interface ValuationMetrics {
   ticker: string;
   peAnnual?: number;
-  peTTM?: number;
+  evToEBITDA?: number;
   psAnnual?: number;
-  psTTM?: number;
+  evToRevenue?: number;
   // Add other metrics as needed
   [key: string]: any;
 }
@@ -519,7 +519,7 @@ export const getServerStatus = async (): Promise<string> => {
 };
 
 /**
- * Get valuation metrics for a stock (PE ratio, PS ratio, etc.)
+ * Get valuation metrics for a stock (EV/EBITDA, EV/Revenue, etc.)
  */
 export const getValuationMetrics = async (ticker: string): Promise<ValuationMetrics> => {
   try {
@@ -536,9 +536,9 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     return {
       ticker: ticker,
       peAnnual: data.metric?.peAnnual,
-      peTTM: data.metric?.peTTM,
+      evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       psAnnual: data.metric?.psAnnual,
-      psTTM: data.metric?.psTTM,
+      evToRevenue: data.metric?.enterpriseValueOverRevenue,
       // Add other metrics as needed
     };
   } catch (error) {
