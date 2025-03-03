@@ -172,14 +172,48 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
 
   // Extract financial metrics from API data
   const extractFinancialMetrics = (data: FinancialData[]): FinancialMetrics => {
-    if (data.length === 0 || !data[0]?.financials) {
+    if (data.length === 0) {
+      console.log('No financial data found, using sample data');
+      return getSampleData();
+    }
+    
+    // Sort data by fiscal year and period to ensure chronological order
+    const sortedData = [...data].sort((a, b) => {
+      // First compare by year
+      const yearA = a.fiscal_year ? parseInt(a.fiscal_year.toString()) : 0;
+      const yearB = b.fiscal_year ? parseInt(b.fiscal_year.toString()) : 0;
+      
+      if (yearA !== yearB) {
+        return yearA - yearB;
+      }
+      
+      // If years are the same, compare by quarter
+      const quarterMap: Record<string, number> = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4 };
+      const quarterA = a.fiscal_period && typeof a.fiscal_period === 'string' ? quarterMap[a.fiscal_period] || 0 : 0;
+      const quarterB = b.fiscal_period && typeof b.fiscal_period === 'string' ? quarterMap[b.fiscal_period] || 0 : 0;
+      
+      return quarterA - quarterB;
+    });
+    
+    // Get the latest quarter with data
+    let latestQuarterWithData: FinancialData | undefined = undefined;
+    
+    // Find the latest quarter with valid data
+    for (let i = sortedData.length - 1; i >= 0; i--) {
+      if (sortedData[i]?.financials) {
+        latestQuarterWithData = sortedData[i];
+        break;
+      }
+    }
+    
+    if (!latestQuarterWithData || !latestQuarterWithData.financials) {
       console.log('No valid financial data found, using sample data');
       return getSampleData();
     }
     
-    const incomeStatement = data[0].financials.income_statement || {};
-    const balanceSheet = data[0].financials.balance_sheet || {};
-    const cashFlow = data[0].financials.cash_flow_statement || {};
+    const incomeStatement = latestQuarterWithData.financials.income_statement || {};
+    const balanceSheet = latestQuarterWithData.financials.balance_sheet || {};
+    const cashFlow = latestQuarterWithData.financials.cash_flow_statement || {};
     
     console.log('Income statement:', incomeStatement);
     console.log('Balance sheet:', balanceSheet);
@@ -188,10 +222,21 @@ const ValuationMetricsVisualized: React.FC<ValuationMetricsVisualizedProps> = ({
     // In Polygon.io API, financial metrics are objects with a 'value' property
     // Extract the value safely from the nested structure
     const extractValue = (obj: any, key: string): number => {
-      if (!obj || !obj[key] || typeof obj[key].value !== 'number') {
+      if (!obj || !obj[key]) {
         return 0;
       }
-      return obj[key].value;
+      
+      // If it's an object with a value property
+      if (typeof obj[key] === 'object' && obj[key] !== null && 'value' in obj[key]) {
+        return typeof obj[key].value === 'number' ? obj[key].value : 0;
+      }
+      
+      // If it's a direct number
+      if (typeof obj[key] === 'number') {
+        return obj[key];
+      }
+      
+      return 0;
     };
     
     // Extract income statement values

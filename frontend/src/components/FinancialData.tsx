@@ -65,7 +65,10 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
           date: item.period_of_report_date
         })));
         
-        setFinancials(lastFourQuarters);
+        // Process the data to replace N/A values with the latest available data
+        const processedData = processFinancialData(lastFourQuarters);
+        
+        setFinancials(processedData);
       } catch (err) {
         console.error('Error fetching financial data:', err);
         setError('Failed to load financial data');
@@ -76,6 +79,75 @@ const FinancialDataComponent: React.FC<FinancialDataProps> = ({ ticker }) => {
     
     fetchFinancials();
   }, [ticker]);
+
+  // Process financial data to replace N/A values with the latest available data
+  const processFinancialData = (data: FinancialData[]): FinancialData[] => {
+    if (!data || data.length === 0) return data;
+    
+    // Create a deep copy of the data to avoid mutating the original
+    const processedData = JSON.parse(JSON.stringify(data));
+    
+    // Track the latest valid values for each metric
+    const latestValues: Record<string, any> = {};
+    
+    // Process each quarter in chronological order
+    for (let i = 0; i < processedData.length; i++) {
+      const quarter = processedData[i];
+      
+      // Process income statement
+      if (quarter.financials?.income_statement) {
+        Object.keys(quarter.financials.income_statement).forEach(metric => {
+          const value = quarter.financials.income_statement[metric];
+          
+          if (value === null || value === undefined || value === 'N/A') {
+            // Use the latest known value if available
+            if (latestValues[`income_${metric}`]) {
+              quarter.financials.income_statement[metric] = latestValues[`income_${metric}`];
+            }
+          } else {
+            // Store this as the latest valid value
+            latestValues[`income_${metric}`] = value;
+          }
+        });
+      }
+      
+      // Process balance sheet
+      if (quarter.financials?.balance_sheet) {
+        Object.keys(quarter.financials.balance_sheet).forEach(metric => {
+          const value = quarter.financials.balance_sheet[metric];
+          
+          if (value === null || value === undefined || value === 'N/A') {
+            // Use the latest known value if available
+            if (latestValues[`balance_${metric}`]) {
+              quarter.financials.balance_sheet[metric] = latestValues[`balance_${metric}`];
+            }
+          } else {
+            // Store this as the latest valid value
+            latestValues[`balance_${metric}`] = value;
+          }
+        });
+      }
+      
+      // Process cash flow statement
+      if (quarter.financials?.cash_flow_statement) {
+        Object.keys(quarter.financials.cash_flow_statement).forEach(metric => {
+          const value = quarter.financials.cash_flow_statement[metric];
+          
+          if (value === null || value === undefined || value === 'N/A') {
+            // Use the latest known value if available
+            if (latestValues[`cash_flow_${metric}`]) {
+              quarter.financials.cash_flow_statement[metric] = latestValues[`cash_flow_${metric}`];
+            }
+          } else {
+            // Store this as the latest valid value
+            latestValues[`cash_flow_${metric}`] = value;
+          }
+        });
+      }
+    }
+    
+    return processedData;
+  };
 
   // Format currency
   const formatCurrency = (value: number | undefined) => {
