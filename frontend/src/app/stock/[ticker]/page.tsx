@@ -10,6 +10,7 @@ import InsiderTrading from '@/components/InsiderTrading';
 import RelatedCompanies from '@/components/RelatedCompanies';
 import ValuationStats from '@/components/ValuationStats';
 import ValuationMetricsVisualized from '@/components/ValuationMetricsVisualized';
+import AdvancedValuationMetrics from '@/components/AdvancedValuationMetrics';
 import ViewLimitPopup from '@/components/ViewLimitPopup';
 import { useAuth } from '@/lib/AuthContext';
 import { checkViewLimit } from '@/lib/viewLimits';
@@ -431,6 +432,11 @@ export default function StockDetailPage() {
           {/* Valuation Stats */}
           <div className="mb-6">
             <ValuationStats ticker={ticker as string} />
+          </div>
+          
+          {/* Advanced Valuation Metrics */}
+          <div className="mb-6">
+            <AdvancedValuationMetrics ticker={ticker as string} />
           </div>
           
           {/* Valuation Metrics Visualized */}
