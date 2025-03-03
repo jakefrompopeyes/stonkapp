@@ -53,9 +53,18 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     }
   }, [ticker]);
 
-  const getHealthScore = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }) => {
-    if (value === undefined) return { score: 0, status: 'unknown' };
+  const getHealthScore = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }, isInverse: boolean = false) => {
+    if (value === undefined || value === null) return { score: 0, status: 'unknown' };
     
+    // For metrics where lower values are better (like debt ratios)
+    if (isInverse) {
+      if (value <= thresholds.good) return { score: 100, status: 'good' };
+      if (value <= thresholds.fair) return { score: 60, status: 'fair' };
+      if (value <= thresholds.poor) return { score: 30, status: 'poor' };
+      return { score: 0, status: 'critical' };
+    }
+    
+    // For metrics where higher values are better
     if (value >= thresholds.good) return { score: 100, status: 'good' };
     if (value >= thresholds.fair) return { score: 60, status: 'fair' };
     if (value >= thresholds.poor) return { score: 30, status: 'poor' };
@@ -74,7 +83,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
   };
 
   const formatNumber = (value: number | undefined, decimals: number = 2) => {
-    if (value === undefined) return 'N/A';
+    if (value === undefined || value === null) return 'N/A';
     return value.toFixed(decimals);
   };
 
@@ -83,14 +92,17 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
     value: number | undefined;
     thresholds: { poor: number; fair: number; good: number };
     description: string;
-  }> = ({ label, value, thresholds, description }) => {
-    const { score, status } = getHealthScore(value, thresholds);
+    isInverse?: boolean;
+  }> = ({ label, value, thresholds, description, isInverse = false }) => {
+    const { score, status } = getHealthScore(value, thresholds, isInverse);
     
     return (
       <div className="bg-white p-4 rounded-lg shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <h4 className="text-sm font-medium text-gray-700">{label}</h4>
-          <span className="text-lg font-semibold">{formatNumber(value)}</span>
+          <span className={`text-lg font-semibold ${status !== 'unknown' ? getTextColor(status) : 'text-gray-500'}`}>
+            {formatNumber(value)}
+          </span>
         </div>
         
         <div className="h-2 bg-gray-200 rounded-full mb-2">
@@ -101,15 +113,50 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
         </div>
         
         <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Critical</span>
-          <span>Poor</span>
-          <span>Fair</span>
-          <span>Good</span>
+          <span className="text-red-500">Critical</span>
+          <span className="text-orange-500">Poor</span>
+          <span className="text-yellow-500">Fair</span>
+          <span className="text-green-500">Good</span>
         </div>
         
         <p className="text-xs text-gray-600 mt-2">{description}</p>
+        
+        {status !== 'unknown' && (
+          <div className="mt-2 text-xs">
+            <span className={getTextColor(status)}>
+              {getMetricStatus(value, thresholds, isInverse)}
+            </span>
+          </div>
+        )}
       </div>
     );
+  };
+
+  const getTextColor = (status: string) => {
+    const colors = {
+      good: 'text-green-600',
+      fair: 'text-yellow-600',
+      poor: 'text-orange-600',
+      critical: 'text-red-600',
+      unknown: 'text-gray-500'
+    };
+    return colors[status as keyof typeof colors] || colors.unknown;
+  };
+
+  const getMetricStatus = (value: number | undefined, thresholds: { poor: number; fair: number; good: number }, isInverse: boolean) => {
+    if (value === undefined || value === null) return '';
+    
+    if (isInverse) {
+      if (value <= thresholds.good) return 'Strong Position';
+      if (value <= thresholds.fair) return 'Adequate';
+      if (value <= thresholds.poor) return 'Needs Attention';
+      return 'High Risk';
+    }
+    
+    if (value >= thresholds.good) return 'Strong Position';
+    if (value >= thresholds.fair) return 'Adequate';
+    if (value >= thresholds.poor) return 'Needs Attention';
+    return 'High Risk';
   };
 
   if (loading) {
@@ -166,6 +213,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           value={metrics.debtToEquityTTM}
           thresholds={{ poor: 2, fair: 1.5, good: 1 }}
           description="Shows financial leverage. Lower ratios indicate less risk, with under 1.0 considered conservative."
+          isInverse={true}
         />
         
         <MetricGauge
@@ -173,6 +221,7 @@ const FinancialHealthVisualized: React.FC<FinancialHealthVisualized> = ({ ticker
           value={metrics.debtToAssetsTTM}
           thresholds={{ poor: 0.7, fair: 0.5, good: 0.3 }}
           description="Percentage of assets financed by debt. Lower values indicate stronger solvency."
+          isInverse={true}
         />
         
         <MetricGauge
