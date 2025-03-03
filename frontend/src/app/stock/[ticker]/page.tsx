@@ -17,6 +17,7 @@ import { checkViewLimit } from '@/lib/viewLimits';
 import ViewCounter from '@/components/ViewCounter';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import FinancialHealthVisualized from '@/components/FinancialHealthVisualized';
 
 export default function StockDetailPage() {
   const { ticker } = useParams();
@@ -432,6 +433,11 @@ export default function StockDetailPage() {
           {/* Valuation Stats */}
           <div className="mb-6">
             <ValuationStats ticker={ticker as string} />
+          </div>
+          
+          {/* Financial Health Analysis */}
+          <div className="mb-6">
+            <FinancialHealthVisualized ticker={ticker as string} />
           </div>
           
           {/* Advanced Valuation Metrics */}
