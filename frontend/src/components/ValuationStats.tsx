@@ -10,7 +10,6 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { ValuationMetrics, getValuationMetrics, getStockDetails } from '@/lib/stockApi';
-import { getKeyMetrics, getEnterpriseValue } from '@/lib/fmpApi';
 
 // Register Chart.js components
 ChartJS.register(
@@ -28,8 +27,6 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<ValuationMetrics | null>(null);
   const [marketCap, setMarketCap] = useState<number | null>(null);
-  const [evToEBITDA, setEvToEBITDA] = useState<number | null>(null);
-  const [evToRevenue, setEvToRevenue] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,36 +34,14 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         setLoading(true);
         setError(null);
         
-        // Fetch data from both APIs in parallel
-        const [metricsData, stockDetails, keyMetricsData, enterpriseValueData] = await Promise.all([
+        // Fetch data from APIs
+        const [metricsData, stockDetails] = await Promise.all([
           getValuationMetrics(ticker),
-          getStockDetails(ticker),
-          getKeyMetrics(ticker),
-          getEnterpriseValue(ticker)
+          getStockDetails(ticker)
         ]);
-        
-        console.log('FMP Key Metrics:', keyMetricsData);
-        console.log('FMP Enterprise Value:', enterpriseValueData);
         
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
-        
-        // Calculate EV/EBITDA and EV/Revenue from FMP data
-        if (keyMetricsData && enterpriseValueData) {
-          // For EV/EBITDA
-          if (keyMetricsData.ebitda && enterpriseValueData.enterpriseValue) {
-            const evEbitdaValue = enterpriseValueData.enterpriseValue / keyMetricsData.ebitda;
-            setEvToEBITDA(evEbitdaValue);
-            console.log('Calculated EV/EBITDA:', evEbitdaValue);
-          }
-          
-          // For EV/Revenue
-          if (keyMetricsData.revenue && enterpriseValueData.enterpriseValue) {
-            const evRevenueValue = enterpriseValueData.enterpriseValue / keyMetricsData.revenue;
-            setEvToRevenue(evRevenueValue);
-            console.log('Calculated EV/Revenue:', evRevenueValue);
-          }
-        }
       } catch (err) {
         console.error('Error fetching valuation data:', err);
         setError('Failed to load valuation metrics');
@@ -183,31 +158,11 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-center">
-          <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(evToEBITDA ?? null, marketCap, 'EV/EBITDA')} options={chartOptions} />
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{evToEBITDA?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">EV/EBITDA</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center">
-          <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(evToRevenue ?? null, marketCap, 'EV/Revenue')} options={chartOptions} />
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{evToRevenue?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">EV/Revenue</span>
-            </div>
-          </div>
-        </div>
       </div>
       <div className="mt-4 text-sm text-gray-500">
         <p>Market Cap: {formatLargeNumber(marketCap)}</p>
         <p>PE Ratio: Price to Earnings - Lower values may indicate better value</p>
         <p>PS Ratio: Price to Sales - Lower values may indicate better value</p>
-        <p>EV/EBITDA: Enterprise Value to EBITDA - Lower values suggest the company might be undervalued</p>
-        <p>EV/Revenue: Enterprise Value to Revenue - Lower values indicate potentially better value</p>
       </div>
     </div>
   );

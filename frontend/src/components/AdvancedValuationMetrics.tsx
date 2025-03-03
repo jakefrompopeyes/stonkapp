@@ -17,8 +17,6 @@ interface ValuationData {
   // Key Metrics TTM
   peRatioTTM?: number;
   priceToBookRatioTTM?: number;
-  evToEBITDATTM?: number;
-  evToRevenueTTM?: number;
   currentRatioTTM?: number;
   quickRatioTTM?: number;
   debtToEquityTTM?: number;
@@ -74,8 +72,6 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
           // Key Metrics TTM
           peRatioTTM: keyMetrics?.peRatioTTM,
           priceToBookRatioTTM: keyMetrics?.pbRatioTTM,
-          evToEBITDATTM: keyMetrics?.enterpriseValueOverEBITDATTM,
-          evToRevenueTTM: keyMetrics?.evToRevenueTTM,
           currentRatioTTM: keyMetrics?.currentRatioTTM,
           quickRatioTTM: keyMetrics?.quickRatioTTM,
           debtToEquityTTM: keyMetrics?.debtToEquityTTM,
@@ -168,14 +164,6 @@ const AdvancedValuationMetrics: React.FC<AdvancedValuationMetricsProps> = ({ tic
             <div className="flex justify-between">
               <span className="text-gray-600">P/B Ratio</span>
               <span className="font-medium">{formatNumber(valuationData.priceToBookRatioTTM)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">EV/EBITDA</span>
-              <span className="font-medium">{formatNumber(valuationData.evToEBITDATTM)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">EV/Revenue</span>
-              <span className="font-medium">{formatNumber(valuationData.evToRevenueTTM)}</span>
             </div>
           </div>
         </div>
