@@ -523,6 +523,7 @@ export const getServerStatus = async (): Promise<string> => {
  */
 export const getValuationMetrics = async (ticker: string): Promise<ValuationMetrics> => {
   try {
+    console.log(`Fetching valuation metrics for ${ticker}`);
     // Fetch data from Finnhub API
     const response = await fetch(`${FINNHUB_BASE_URL}/stock/metric?symbol=${ticker}&metric=all&token=${FINNHUB_API_KEY}`);
     
@@ -532,28 +533,37 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     }
     
     const data = await response.json();
+    console.log(`Finnhub data for ${ticker}:`, data.metric);
     
     // Import the FMP API function to get key metrics
     const { getKeyMetricsTTM } = await import('@/lib/fmpApi');
     
     // Fetch key metrics data from FMP API
     const keyMetrics = await getKeyMetricsTTM(ticker);
+    console.log(`FMP key metrics for ${ticker}:`, keyMetrics);
     
     // Get book value directly from FMP API
     let bookValue: number | undefined = undefined;
     if (keyMetrics?.bookValuePerShare) {
+      console.log(`Found bookValuePerShare: ${keyMetrics.bookValuePerShare}`);
       // If we have bookValuePerShare, we can calculate total book value
       // by multiplying by shares outstanding (if available)
       if (data.metric?.sharesOutstanding) {
+        console.log(`Found sharesOutstanding: ${data.metric.sharesOutstanding}`);
         bookValue = keyMetrics.bookValuePerShare * data.metric.sharesOutstanding;
+        console.log(`Calculated bookValue: ${bookValue}`);
       } else {
         // If shares outstanding is not available, we'll just use bookValuePerShare
+        console.log(`No sharesOutstanding found, using bookValuePerShare directly`);
         bookValue = keyMetrics.bookValuePerShare;
+        console.log(`Using bookValuePerShare as bookValue: ${bookValue}`);
       }
+    } else {
+      console.log(`No bookValuePerShare found in FMP key metrics`);
     }
     
     // Extract the metrics we need
-    return {
+    const result = {
       ticker: ticker,
       peAnnual: data.metric?.peAnnual,
       psAnnual: data.metric?.psAnnual,
@@ -561,6 +571,9 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
       bookValue: bookValue,
     };
+    
+    console.log(`Final valuation metrics for ${ticker}:`, result);
+    return result;
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
     // Return a minimal valid ValuationMetrics object

@@ -40,8 +40,19 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
           getStockDetails(ticker)
         ]);
         
+        console.log('ValuationStats - metrics data:', metricsData);
+        console.log('ValuationStats - stock details:', stockDetails);
+        
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
+        
+        console.log('ValuationStats - book value:', metricsData.bookValue);
+        console.log('ValuationStats - market cap:', stockDetails.market_cap);
+        if (metricsData.bookValue && stockDetails.market_cap) {
+          console.log('ValuationStats - P/B ratio:', stockDetails.market_cap / metricsData.bookValue);
+        } else {
+          console.log('ValuationStats - Cannot calculate P/B ratio, missing data');
+        }
       } catch (err) {
         console.error('Error fetching valuation data:', err);
         setError('Failed to load valuation metrics');
@@ -160,9 +171,11 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         </div>
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
+            {/* Debug log for P/B chart rendering */}
+            {(() => { console.log('Rendering P/B chart - bookValue:', metrics.bookValue, 'marketCap:', marketCap); return null; })()}
             <Doughnut data={createDonutData(metrics.bookValue ? marketCap / metrics.bookValue : null, marketCap, 'P/B Ratio')} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{metrics.bookValue ? (marketCap / metrics.bookValue).toFixed(1) : 'N/A'}x</span>
+              <span className="text-lg font-bold">{metrics.bookValue && marketCap ? (marketCap / metrics.bookValue).toFixed(1) : 'N/A'}x</span>
               <span className="text-xs text-gray-500">P/B Ratio</span>
             </div>
           </div>
