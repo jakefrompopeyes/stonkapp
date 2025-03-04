@@ -535,17 +535,23 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     const data = await response.json();
     console.log(`Finnhub data for ${ticker}:`, data.metric);
     
-    // Import the FMP API function to get key metrics
-    const { getKeyMetricsTTM } = await import('@/lib/fmpApi');
+    // Import the FMP API functions
+    const { getKeyMetricsTTM, getFinancialRatiosTTM } = await import('@/lib/fmpApi');
     
     // Fetch key metrics data from FMP API
     const keyMetrics = await getKeyMetricsTTM(ticker);
     console.log(`FMP key metrics for ${ticker}:`, keyMetrics);
     
+    // Also try to get financial ratios which might have book value data
+    const ratios = await getFinancialRatiosTTM(ticker);
+    console.log(`FMP financial ratios for ${ticker}:`, ratios);
+    
     // Get book value directly from FMP API
     let bookValue: number | undefined = undefined;
+    
+    // Try to get book value from key metrics
     if (keyMetrics?.bookValuePerShare) {
-      console.log(`Found bookValuePerShare: ${keyMetrics.bookValuePerShare}`);
+      console.log(`Found bookValuePerShare in key metrics: ${keyMetrics.bookValuePerShare}`);
       // If we have bookValuePerShare, we can calculate total book value
       // by multiplying by shares outstanding (if available)
       if (data.metric?.sharesOutstanding) {
@@ -560,6 +566,27 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       }
     } else {
       console.log(`No bookValuePerShare found in FMP key metrics`);
+      
+      // Try to get book value from financial ratios
+      if (ratios?.priceToBookRatio && data.metric?.price) {
+        console.log(`Found priceToBookRatio: ${ratios.priceToBookRatio} and price: ${data.metric.price}`);
+        // Calculate book value per share from P/B ratio
+        const bookValuePerShare = data.metric.price / ratios.priceToBookRatio;
+        console.log(`Calculated bookValuePerShare from P/B ratio: ${bookValuePerShare}`);
+        
+        // Calculate total book value if shares outstanding is available
+        if (data.metric?.sharesOutstanding) {
+          console.log(`Found sharesOutstanding: ${data.metric.sharesOutstanding}`);
+          bookValue = bookValuePerShare * data.metric.sharesOutstanding;
+          console.log(`Calculated bookValue: ${bookValue}`);
+        } else {
+          // Otherwise just use book value per share
+          bookValue = bookValuePerShare;
+          console.log(`Using bookValuePerShare as bookValue: ${bookValue}`);
+        }
+      } else {
+        console.log(`Could not calculate book value from financial ratios either`);
+      }
     }
     
     // Extract the metrics we need
