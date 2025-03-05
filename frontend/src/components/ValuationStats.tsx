@@ -167,6 +167,16 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     },
   };
 
+  // Calculate book value per share
+  const calculateBookValuePerShare = () => {
+    if (!metrics?.bookValue || !metrics?.sharesOutstanding) {
+      return null;
+    }
+    return metrics.bookValue / metrics.sharesOutstanding;
+  };
+
+  const bookValuePerShare = calculateBookValuePerShare();
+
   if (loading) {
     return <div className="p-4 bg-white rounded-lg shadow-md">Loading valuation metrics...</div>;
   }
@@ -210,11 +220,13 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
             <Doughnut 
-              data={createDonutData(metrics.bookValue ?? null, 'Book Value Per Share')} 
+              data={createDonutData(bookValuePerShare, 'Book Value Per Share')} 
               options={chartOptions} 
             />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">${metrics.bookValue ? (metrics.bookValue / (metrics.sharesOutstanding || 1)).toFixed(2) : 'N/A'}</span>
+              <span className="text-lg font-bold">
+                {bookValuePerShare ? `$${bookValuePerShare.toFixed(2)}` : 'N/A'}
+              </span>
               <span className="text-xs text-gray-500">Book Value/Share</span>
             </div>
           </div>
@@ -225,7 +237,12 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <p>PE Ratio: Price to Earnings - Lower values may indicate better value</p>
         <p>PS Ratio: Price to Sales - Lower values may indicate better value</p>
         <p>Book Value Per Share: Total shareholders' equity divided by shares outstanding</p>
-        {metrics.bookValue && marketCap && <p>P/B Ratio: {(marketCap / metrics.bookValue).toFixed(2)}x - Price to Book - Lower values may indicate better value</p>}
+        {bookValuePerShare && marketCap && (
+          <p>
+            P/B Ratio: {(marketCap / (bookValuePerShare * (metrics?.sharesOutstanding || 1))).toFixed(2)}x - 
+            Price to Book - Lower values may indicate better value
+          </p>
+        )}
       </div>
     </div>
   );

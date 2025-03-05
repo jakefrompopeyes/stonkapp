@@ -536,20 +536,44 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     console.log(`Finnhub data for ${ticker}:`, data.metric);
     
     // Get shares outstanding from the API response
-    const sharesOutstanding = data.metric?.sharesOutstanding || 100000000; // Default to 100M if not available
+    const sharesOutstanding = data.metric?.sharesOutstanding;
     
-    // TEMPORARY: Hardcode a total equity value for testing
-    // This ensures we have a value to display while we debug the API issues
-    const totalEquity = 1000000000; // 1 billion - a reasonable book value for testing
+    // Try to get book value from Finnhub API
+    let bookValue;
     
-    // Calculate book value per share
-    const bookValue = totalEquity;
+    // Check if pbAnnual (Price to Book) is available
+    if (data.metric?.pbAnnual && data.metric?.price) {
+      // Calculate book value from P/B ratio: Price / (P/B) = Book Value
+      bookValue = (data.metric.price / data.metric.pbAnnual) * sharesOutstanding;
+      console.log(`Calculated book value from P/B ratio: ${bookValue}`);
+    } else {
+      // If P/B ratio is not available, try to get it from financial statements
+      try {
+        // Import the getFinancialData function
+        const { getFinancialData } = await import('@/lib/stockApiNew');
+        
+        // Get the most recent financial data
+        const financialData = await getFinancialData(ticker);
+        
+        if (financialData && financialData.length > 0) {
+          // Get the most recent statement
+          const latestStatement = financialData[0];
+          
+          // Check if we have balance sheet data with equity
+          if (latestStatement.financials?.balance_sheet?.equity) {
+            bookValue = latestStatement.financials.balance_sheet.equity;
+            console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error fetching financial data:`, err);
+      }
+    }
     
-    console.log(`Calculated values for ${ticker}:`, {
+    console.log(`Final values for ${ticker}:`, {
       sharesOutstanding,
-      totalEquity,
       bookValue,
-      bookValuePerShare: bookValue / sharesOutstanding
+      bookValuePerShare: bookValue && sharesOutstanding ? bookValue / sharesOutstanding : undefined
     });
     
     // Extract the metrics we need
@@ -559,16 +583,14 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
-      bookValue: bookValue, // Total equity value
-      sharesOutstanding: sharesOutstanding, // Add shares outstanding
+      bookValue: bookValue,
+      sharesOutstanding: sharesOutstanding,
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
-    // Return a minimal valid ValuationMetrics object with hardcoded values
+    // Return a minimal valid ValuationMetrics object
     return {
-      ticker: ticker,
-      bookValue: 1000000000, // 1 billion - a reasonable book value for testing
-      sharesOutstanding: 100000000 // 100 million - a reasonable number of shares for testing
+      ticker: ticker
     };
   }
 }; 
