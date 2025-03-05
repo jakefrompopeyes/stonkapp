@@ -172,6 +172,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     if (!metrics?.bookValue || !metrics?.sharesOutstanding) {
       return null;
     }
+    // Book Value Per Share = Total Shareholder Equity / Shares Outstanding
     return metrics.bookValue / metrics.sharesOutstanding;
   };
 
@@ -237,9 +238,9 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <p>PE Ratio: Price to Earnings - Lower values may indicate better value</p>
         <p>PS Ratio: Price to Sales - Lower values may indicate better value</p>
         <p>Book Value Per Share: Total shareholders' equity divided by shares outstanding</p>
-        {bookValuePerShare && marketCap && (
+        {metrics?.bookValue && marketCap && (
           <p>
-            P/B Ratio: {(marketCap / (bookValuePerShare * (metrics?.sharesOutstanding || 1))).toFixed(2)}x - 
+            P/B Ratio: {(marketCap / metrics.bookValue).toFixed(2)}x - 
             Price to Book - Lower values may indicate better value
           </p>
         )}

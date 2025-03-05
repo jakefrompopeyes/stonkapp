@@ -533,36 +533,36 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     // Get shares outstanding from the API response
     const sharesOutstanding = data.metric?.sharesOutstanding;
     
-    // Try to get book value from Finnhub API
+    // We need to get the total shareholder equity (book value)
     let bookValue;
     
-    // Check if pbAnnual (Price to Book) is available
-    if (data.metric?.pbAnnual && data.metric?.price) {
-      // Calculate book value from P/B ratio: Price / (P/B) = Book Value
+    // Try to get book value from financial statements
+    try {
+      // Import the getFinancialData function
+      const { getFinancialData } = await import('@/lib/stockApiNew');
+      
+      // Get the most recent financial data
+      const financialData = await getFinancialData(ticker);
+      
+      if (financialData && financialData.length > 0) {
+        // Get the most recent statement
+        const latestStatement = financialData[0];
+        
+        // Check if we have balance sheet data with equity
+        if (latestStatement.financials?.balance_sheet?.equity) {
+          bookValue = latestStatement.financials.balance_sheet.equity;
+          console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
+        }
+      }
+    } catch (err) {
+      console.error(`Error fetching financial data:`, err);
+    }
+    
+    // If we couldn't get book value from financial statements, try to calculate it from P/B ratio
+    if (!bookValue && data.metric?.pbAnnual && data.metric?.price && sharesOutstanding) {
+      // Calculate total equity: Price per share / P/B ratio * Shares Outstanding
       bookValue = (data.metric.price / data.metric.pbAnnual) * sharesOutstanding;
       console.log(`Calculated book value from P/B ratio: ${bookValue}`);
-    } else {
-      // If P/B ratio is not available, try to get it from financial statements
-      try {
-        // Import the getFinancialData function
-        const { getFinancialData } = await import('@/lib/stockApiNew');
-        
-        // Get the most recent financial data
-        const financialData = await getFinancialData(ticker);
-        
-        if (financialData && financialData.length > 0) {
-          // Get the most recent statement
-          const latestStatement = financialData[0];
-          
-          // Check if we have balance sheet data with equity
-          if (latestStatement.financials?.balance_sheet?.equity) {
-            bookValue = latestStatement.financials.balance_sheet.equity;
-            console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
-          }
-        }
-      } catch (err) {
-        console.error(`Error fetching financial data:`, err);
-      }
     }
     
     console.log(`Final values for ${ticker}:`, {
@@ -578,7 +578,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
-      bookValue: bookValue,
+      bookValue: bookValue, // Total shareholder equity
       sharesOutstanding: sharesOutstanding,
     };
   } catch (error) {
