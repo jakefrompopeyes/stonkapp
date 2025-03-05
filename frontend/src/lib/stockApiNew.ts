@@ -185,9 +185,21 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
     }
     
     const data = await response.json();
+    console.log(`Polygon API response for ${ticker}:`, data.results);
     
     // Also fetch valuation metrics to get shares outstanding
     const valuationMetrics = await getValuationMetrics(ticker);
+    
+    // Get shares outstanding from Polygon API first, fallback to valuation metrics
+    let sharesOutstanding = data.results.share_class_shares_outstanding;
+    
+    // If not available in Polygon, try to get it from Finnhub via valuation metrics
+    if (!sharesOutstanding && valuationMetrics.sharesOutstanding) {
+      sharesOutstanding = valuationMetrics.sharesOutstanding;
+      console.log(`Using shares outstanding from Finnhub: ${sharesOutstanding}`);
+    }
+    
+    console.log(`Final shares outstanding for ${ticker}: ${sharesOutstanding}`);
     
     // Map the response to our StockDetails interface
     return {
@@ -200,7 +212,7 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       market_cap: data.results.market_cap,
       total_employees: data.results.total_employees,
       list_date: data.results.list_date,
-      shares_outstanding: valuationMetrics.sharesOutstanding, // Add shares outstanding from valuation metrics
+      shares_outstanding: sharesOutstanding, // Use the shares outstanding we determined
       address: data.results.address,
       homepage_url: data.results.homepage_url,
       branding: data.results.branding,
@@ -218,7 +230,7 @@ export const getStockDetails = async (ticker: string): Promise<StockDetails> => 
       market: '',
       type: '',
       active: true,
-      shares_outstanding: undefined, // Add shares outstanding field
+      shares_outstanding: undefined,
     };
   }
 };
@@ -532,6 +544,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     
     // Get shares outstanding from the API response
     const sharesOutstanding = data.metric?.sharesOutstanding;
+    console.log(`Shares outstanding from Finnhub for ${ticker}: ${sharesOutstanding}`);
     
     // We need to get the total shareholder equity (book value)
     let bookValue;
@@ -563,6 +576,32 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       // Calculate total equity: Price per share / P/B ratio * Shares Outstanding
       bookValue = (data.metric.price / data.metric.pbAnnual) * sharesOutstanding;
       console.log(`Calculated book value from P/B ratio: ${bookValue}`);
+    }
+    
+    // If we still don't have shares outstanding, try to get it from another source
+    // For example, try the Polygon API directly
+    if (!sharesOutstanding) {
+      try {
+        const polygonResponse = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apiKey=${POLYGON_API_KEY}`);
+        if (polygonResponse.ok) {
+          const polygonData = await polygonResponse.json();
+          if (polygonData.results?.share_class_shares_outstanding) {
+            const polygonShares = polygonData.results.share_class_shares_outstanding;
+            console.log(`Found shares outstanding from Polygon API: ${polygonShares}`);
+            return {
+              ticker: ticker,
+              peAnnual: data.metric?.peAnnual,
+              psAnnual: data.metric?.psAnnual,
+              evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
+              evToRevenue: data.metric?.enterpriseValueOverRevenue,
+              bookValue: bookValue,
+              sharesOutstanding: polygonShares,
+            };
+          }
+        }
+      } catch (err) {
+        console.error(`Error fetching shares outstanding from Polygon:`, err);
+      }
     }
     
     console.log(`Final values for ${ticker}:`, {

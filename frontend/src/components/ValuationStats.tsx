@@ -42,8 +42,16 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         
         console.log('ValuationStats - metrics data:', metricsData);
         console.log('ValuationStats - book value:', metricsData.bookValue);
+        console.log('ValuationStats - shares outstanding:', metricsData.sharesOutstanding);
         console.log('ValuationStats - stock details:', stockDetails);
         console.log('ValuationStats - market cap:', stockDetails.market_cap);
+        console.log('ValuationStats - stock details shares outstanding:', stockDetails.shares_outstanding);
+        
+        // If metrics doesn't have shares outstanding but stock details does, use that
+        if (!metricsData.sharesOutstanding && stockDetails.shares_outstanding) {
+          metricsData.sharesOutstanding = stockDetails.shares_outstanding;
+          console.log('Using shares outstanding from stock details:', stockDetails.shares_outstanding);
+        }
         
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
@@ -170,10 +178,16 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
   // Calculate book value per share
   const calculateBookValuePerShare = () => {
     if (!metrics?.bookValue || !metrics?.sharesOutstanding) {
+      console.log('Cannot calculate book value per share - missing data:', {
+        bookValue: metrics?.bookValue,
+        sharesOutstanding: metrics?.sharesOutstanding
+      });
       return null;
     }
     // Book Value Per Share = Total Shareholder Equity / Shares Outstanding
-    return metrics.bookValue / metrics.sharesOutstanding;
+    const result = metrics.bookValue / metrics.sharesOutstanding;
+    console.log(`Calculated book value per share: ${result}`);
+    return result;
   };
 
   const bookValuePerShare = calculateBookValuePerShare();
