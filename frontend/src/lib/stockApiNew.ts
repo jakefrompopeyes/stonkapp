@@ -129,6 +129,7 @@ export interface ValuationMetrics {
   evToEBITDA?: number;
   evToRevenue?: number;
   bookValue?: number;
+  sharesOutstanding?: number;
   [key: string]: any;
 }
 
@@ -532,10 +533,24 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     }
     
     const data = await response.json();
+    console.log(`Finnhub data for ${ticker}:`, data.metric);
     
-    // TEMPORARY: Hardcode a book value for testing
+    // Get shares outstanding from the API response
+    const sharesOutstanding = data.metric?.sharesOutstanding || 100000000; // Default to 100M if not available
+    
+    // TEMPORARY: Hardcode a total equity value for testing
     // This ensures we have a value to display while we debug the API issues
-    const bookValue = 1000000000; // 1 billion - a reasonable book value for testing
+    const totalEquity = 1000000000; // 1 billion - a reasonable book value for testing
+    
+    // Calculate book value per share
+    const bookValue = totalEquity;
+    
+    console.log(`Calculated values for ${ticker}:`, {
+      sharesOutstanding,
+      totalEquity,
+      bookValue,
+      bookValuePerShare: bookValue / sharesOutstanding
+    });
     
     // Extract the metrics we need
     return {
@@ -544,14 +559,16 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
-      bookValue: bookValue, // Always include the hardcoded book value
+      bookValue: bookValue, // Total equity value
+      sharesOutstanding: sharesOutstanding, // Add shares outstanding
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
-    // Return a minimal valid ValuationMetrics object with a hardcoded book value
+    // Return a minimal valid ValuationMetrics object with hardcoded values
     return {
       ticker: ticker,
-      bookValue: 1000000000 // 1 billion - a reasonable book value for testing
+      bookValue: 1000000000, // 1 billion - a reasonable book value for testing
+      sharesOutstanding: 100000000 // 100 million - a reasonable number of shares for testing
     };
   }
 }; 

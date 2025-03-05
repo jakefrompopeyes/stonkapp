@@ -99,15 +99,15 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
       };
     }
     
-    // Special case for Book Value
-    if (label === 'Book Value') {
-      console.log(`Rendering Book Value chart with value: ${ratio}`);
-      // For Book Value, use a fixed scale to show a portion of the circle
+    // Special case for Book Value Per Share
+    if (label === 'Book Value Per Share') {
+      console.log(`Rendering Book Value Per Share chart with value: ${ratio}`);
+      // For Book Value Per Share, use a fixed scale to show a portion of the circle
       return {
         datasets: [
           {
             data: [1, 2], // 1/3 of the circle filled
-            backgroundColor: ['#4caf50', '#e0e0e0'],
+            backgroundColor: ['#3b82f6', '#e0e0e0'], // Blue color
             borderWidth: 0,
           },
         ],
@@ -139,7 +139,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
       datasets: [
         {
           data: [filledPart, emptyPart],
-          backgroundColor: ['#4caf50', '#e0e0e0'],
+          backgroundColor: ['#3b82f6', '#e0e0e0'], // Blue color
           borderWidth: 0,
         },
       ],
@@ -210,12 +210,12 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
             <Doughnut 
-              data={createDonutData(metrics.bookValue ?? null, 'Book Value')} 
+              data={createDonutData(metrics.bookValue ?? null, 'Book Value Per Share')} 
               options={chartOptions} 
             />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{formatLargeNumber(metrics.bookValue)}</span>
-              <span className="text-xs text-gray-500">Book Value</span>
+              <span className="text-lg font-bold">${metrics.bookValue ? (metrics.bookValue / (metrics.sharesOutstanding || 1)).toFixed(2) : 'N/A'}</span>
+              <span className="text-xs text-gray-500">Book Value/Share</span>
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <p>Market Cap: {formatLargeNumber(marketCap)}</p>
         <p>PE Ratio: Price to Earnings - Lower values may indicate better value</p>
         <p>PS Ratio: Price to Sales - Lower values may indicate better value</p>
-        <p>Book Value: Total shareholders' equity - Higher values may indicate stronger financial position</p>
+        <p>Book Value Per Share: Total shareholders' equity divided by shares outstanding</p>
         {metrics.bookValue && marketCap && <p>P/B Ratio: {(marketCap / metrics.bookValue).toFixed(2)}x - Price to Book - Lower values may indicate better value</p>}
       </div>
     </div>
