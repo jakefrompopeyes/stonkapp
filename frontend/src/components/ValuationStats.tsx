@@ -225,7 +225,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
             </div>
           </div>
           <p className="mt-2 text-sm text-gray-600 text-center">
-            Book Value Per Share = Shareholder Equity / Outstanding Shares
+            Book Value Per Share = Outstanding Shares / Shareholder Equity
           </p>
         </div>
       </div>

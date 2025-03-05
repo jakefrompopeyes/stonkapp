@@ -591,10 +591,10 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       }
     }
     
-    // CALCULATE BOOK VALUE PER SHARE: Shareholder Equity / Outstanding Shares
+    // CALCULATE BOOK VALUE PER SHARE: Outstanding Shares / Shareholder Equity (REVERSED)
     if (bookValue && sharesOutstanding) {
-      bookValuePerShare = bookValue / sharesOutstanding;
-      console.log(`BOOK VALUE PER SHARE CALCULATION: ${bookValue} / ${sharesOutstanding} = ${bookValuePerShare}`);
+      bookValuePerShare = sharesOutstanding / bookValue;
+      console.log(`BOOK VALUE PER SHARE CALCULATION (REVERSED): ${sharesOutstanding} / ${bookValue} = ${bookValuePerShare}`);
     } else {
       console.log(`Cannot calculate book value per share - missing data:`, {
         bookValue,
