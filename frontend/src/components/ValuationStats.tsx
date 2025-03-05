@@ -222,7 +222,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
               data={createDonutData(
                 // Just pass the raw book value directly, not as a ratio with market cap
                 metrics.bookValue ?? null, 
-                marketCap, 
+                null, // Not using market cap for this calculation
                 'Book Value'
               )} 
               options={chartOptions} 
