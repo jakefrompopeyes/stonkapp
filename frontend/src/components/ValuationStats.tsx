@@ -164,17 +164,45 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   // Calculate book value per share directly in the component using the formula: Outstanding Shares / Shareholder Equity
   const calculateBookValuePerShare = () => {
-    if (!metrics?.sharesOutstanding || !metrics?.bookValue) {
+    console.log('DEBUGGING - Full metrics object:', metrics);
+    
+    // Check if we have the required data
+    if (!metrics) {
+      console.log('No metrics data available');
+      return null;
+    }
+    
+    console.log('DEBUGGING - Shares Outstanding:', metrics.sharesOutstanding, 'type:', typeof metrics.sharesOutstanding);
+    console.log('DEBUGGING - Book Value (Shareholder Equity):', metrics.bookValue, 'type:', typeof metrics.bookValue);
+    
+    if (!metrics.sharesOutstanding || !metrics.bookValue) {
       console.log('Cannot calculate Book Value Per Share - missing data:', {
-        sharesOutstanding: metrics?.sharesOutstanding,
-        bookValue: metrics?.bookValue
+        sharesOutstanding: metrics.sharesOutstanding,
+        bookValue: metrics.bookValue
       });
       return null;
     }
     
+    // Make sure both values are numbers
+    const sharesOutstanding = Number(metrics.sharesOutstanding);
+    const bookValue = Number(metrics.bookValue);
+    
+    console.log('DEBUGGING - Converted values:', {
+      sharesOutstanding,
+      bookValue,
+      isNaNShares: isNaN(sharesOutstanding),
+      isNaNBookValue: isNaN(bookValue)
+    });
+    
+    // Check for valid numbers
+    if (isNaN(sharesOutstanding) || isNaN(bookValue) || bookValue === 0) {
+      console.log('Invalid values for calculation');
+      return null;
+    }
+    
     // DIRECT CALCULATION: Outstanding Shares / Shareholder Equity
-    const result = metrics.sharesOutstanding / metrics.bookValue;
-    console.log(`BOOK VALUE PER SHARE CALCULATION: ${metrics.sharesOutstanding} / ${metrics.bookValue} = ${result}`);
+    const result = sharesOutstanding / bookValue;
+    console.log(`BOOK VALUE PER SHARE CALCULATION: ${sharesOutstanding} / ${bookValue} = ${result}`);
     return result;
   };
 

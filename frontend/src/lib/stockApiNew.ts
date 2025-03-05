@@ -549,7 +549,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     let sharesOutstanding = data.metric?.sharesOutstanding;
     let bookValue: number | undefined = undefined;
     
-    console.log(`Initial shares outstanding from Finnhub: ${sharesOutstanding}`);
+    console.log(`Initial shares outstanding from Finnhub: ${sharesOutstanding}, type: ${typeof sharesOutstanding}`);
     
     // Get stock details from Polygon API to get shares outstanding and shareholder equity
     try {
@@ -563,15 +563,25 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
         // Get shares outstanding from Polygon
         if (polygonData.results?.share_class_shares_outstanding) {
           sharesOutstanding = polygonData.results.share_class_shares_outstanding;
-          console.log(`Using shares outstanding from Polygon API: ${sharesOutstanding}`);
+          console.log(`Using shares outstanding from Polygon API: ${sharesOutstanding}, type: ${typeof sharesOutstanding}`);
         }
         
         // Get total shareholder equity from Polygon
         if (polygonData.results?.total_shareholders_equity) {
           bookValue = polygonData.results.total_shareholders_equity;
-          console.log(`Using total shareholder equity from Polygon API: ${bookValue}`);
+          console.log(`Using total shareholder equity from Polygon API: ${bookValue}, type: ${typeof bookValue}`);
         } else {
           console.log(`No total_shareholders_equity found in Polygon data for ${ticker}`);
+          
+          // Try to find it in other properties
+          console.log('Searching for shareholder equity in other Polygon properties...');
+          if (polygonData.results) {
+            Object.keys(polygonData.results).forEach(key => {
+              if (key.toLowerCase().includes('equity') || key.toLowerCase().includes('book')) {
+                console.log(`Found potential equity data in property ${key}:`, polygonData.results[key]);
+              }
+            });
+          }
         }
       } else {
         console.error(`Polygon API request failed: ${polygonResponse.status} ${polygonResponse.statusText}`);
@@ -593,9 +603,19 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
           
           if (latestStatement.financials?.balance_sheet?.equity) {
             bookValue = latestStatement.financials.balance_sheet.equity;
-            console.log(`Using total shareholder equity from balance sheet: ${bookValue}`);
+            console.log(`Using total shareholder equity from balance sheet: ${bookValue}, type: ${typeof bookValue}`);
           } else {
             console.log(`No equity found in balance sheet for ${ticker}`);
+            
+            // Try to find it in other properties
+            console.log('Searching for equity in other financial statement properties...');
+            if (latestStatement.financials && latestStatement.financials.balance_sheet) {
+              Object.keys(latestStatement.financials.balance_sheet).forEach(key => {
+                if (key.toLowerCase().includes('equity') || key.toLowerCase().includes('book')) {
+                  console.log(`Found potential equity data in property ${key}:`, latestStatement.financials.balance_sheet[key]);
+                }
+              });
+            }
           }
         } else {
           console.log(`No financial data found for ${ticker}`);
@@ -613,7 +633,9 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
       bookValue,
-      sharesOutstanding
+      sharesOutstanding,
+      bookValueType: typeof bookValue,
+      sharesOutstandingType: typeof sharesOutstanding
     });
     
     // Return the metrics WITHOUT calculating book value per share
@@ -628,6 +650,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
+    // Return a minimal valid ValuationMetrics object
     return {
       ticker: ticker
     };
