@@ -132,6 +132,7 @@ export interface ValuationMetrics {
   evToRevenue?: number;
   bookValue?: number;
   sharesOutstanding?: number;
+  bookValuePerShare?: number;
   [key: string]: any;
 }
 
@@ -542,72 +543,77 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     const data = await response.json();
     console.log(`Finnhub data for ${ticker}:`, data.metric);
     
-    // Get shares outstanding from the API response
-    const sharesOutstanding = data.metric?.sharesOutstanding;
+    // Get shares outstanding from Finnhub API
+    let sharesOutstanding = data.metric?.sharesOutstanding;
     console.log(`Shares outstanding from Finnhub for ${ticker}: ${sharesOutstanding}`);
     
     // We need to get the total shareholder equity (book value)
     let bookValue;
     
-    // Try to get book value from financial statements
+    // Try to get shares outstanding and book value from Polygon API first
     try {
-      // Import the getFinancialData function
-      const { getFinancialData } = await import('@/lib/stockApiNew');
-      
-      // Get the most recent financial data
-      const financialData = await getFinancialData(ticker);
-      
-      if (financialData && financialData.length > 0) {
-        // Get the most recent statement
-        const latestStatement = financialData[0];
+      const polygonResponse = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apiKey=${POLYGON_API_KEY}`);
+      if (polygonResponse.ok) {
+        const polygonData = await polygonResponse.json();
+        console.log(`Polygon data for ${ticker}:`, polygonData.results);
         
-        // Check if we have balance sheet data with equity
-        if (latestStatement.financials?.balance_sheet?.equity) {
-          bookValue = latestStatement.financials.balance_sheet.equity;
-          console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
+        // Get shares outstanding from Polygon
+        if (polygonData.results?.share_class_shares_outstanding) {
+          const polygonShares = polygonData.results.share_class_shares_outstanding;
+          console.log(`Found shares outstanding from Polygon API: ${polygonShares}`);
+          
+          // Use Polygon shares outstanding
+          sharesOutstanding = polygonShares;
+        }
+        
+        // Try to get total shareholder equity from Polygon
+        if (polygonData.results?.total_shareholders_equity) {
+          bookValue = polygonData.results.total_shareholders_equity;
+          console.log(`Found book value (total equity) from Polygon API: ${bookValue}`);
         }
       }
     } catch (err) {
-      console.error(`Error fetching financial data:`, err);
+      console.error(`Error fetching data from Polygon:`, err);
     }
     
-    // If we couldn't get book value from financial statements, try to calculate it from P/B ratio
+    // If we couldn't get book value from Polygon, try financial statements
+    if (!bookValue) {
+      try {
+        // Import the getFinancialData function
+        const { getFinancialData } = await import('@/lib/stockApiNew');
+        
+        // Get the most recent financial data
+        const financialData = await getFinancialData(ticker);
+        
+        if (financialData && financialData.length > 0) {
+          // Get the most recent statement
+          const latestStatement = financialData[0];
+          
+          // Check if we have balance sheet data with equity
+          if (latestStatement.financials?.balance_sheet?.equity) {
+            bookValue = latestStatement.financials.balance_sheet.equity;
+            console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error fetching financial data:`, err);
+      }
+    }
+    
+    // If we still don't have book value but have P/B ratio and price, calculate it
     if (!bookValue && data.metric?.pbAnnual && data.metric?.price && sharesOutstanding) {
       // Calculate total equity: Price per share / P/B ratio * Shares Outstanding
       bookValue = (data.metric.price / data.metric.pbAnnual) * sharesOutstanding;
       console.log(`Calculated book value from P/B ratio: ${bookValue}`);
     }
     
-    // If we still don't have shares outstanding, try to get it from another source
-    // For example, try the Polygon API directly
-    if (!sharesOutstanding) {
-      try {
-        const polygonResponse = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apiKey=${POLYGON_API_KEY}`);
-        if (polygonResponse.ok) {
-          const polygonData = await polygonResponse.json();
-          if (polygonData.results?.share_class_shares_outstanding) {
-            const polygonShares = polygonData.results.share_class_shares_outstanding;
-            console.log(`Found shares outstanding from Polygon API: ${polygonShares}`);
-            return {
-              ticker: ticker,
-              peAnnual: data.metric?.peAnnual,
-              psAnnual: data.metric?.psAnnual,
-              evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
-              evToRevenue: data.metric?.enterpriseValueOverRevenue,
-              bookValue: bookValue,
-              sharesOutstanding: polygonShares,
-            };
-          }
-        }
-      } catch (err) {
-        console.error(`Error fetching shares outstanding from Polygon:`, err);
-      }
-    }
+    // Calculate book value per share
+    const bookValuePerShare = bookValue && sharesOutstanding ? bookValue / sharesOutstanding : undefined;
     
     console.log(`Final values for ${ticker}:`, {
       sharesOutstanding,
       bookValue,
-      bookValuePerShare: bookValue && sharesOutstanding ? bookValue / sharesOutstanding : undefined
+      bookValuePerShare
     });
     
     // Extract the metrics we need
@@ -619,6 +625,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
       bookValue: bookValue, // Total shareholder equity
       sharesOutstanding: sharesOutstanding,
+      bookValuePerShare: bookValuePerShare // Add book value per share directly
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);

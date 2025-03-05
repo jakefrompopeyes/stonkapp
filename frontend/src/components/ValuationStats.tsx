@@ -175,8 +175,15 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     },
   };
 
-  // Calculate book value per share
-  const calculateBookValuePerShare = () => {
+  // Use book value per share directly from the API if available
+  const getBookValuePerShare = () => {
+    // First try to use the pre-calculated value from the API
+    if (metrics?.bookValuePerShare) {
+      console.log(`Using pre-calculated book value per share from API: ${metrics.bookValuePerShare}`);
+      return metrics.bookValuePerShare;
+    }
+    
+    // Otherwise calculate it ourselves
     if (!metrics?.bookValue || !metrics?.sharesOutstanding) {
       console.log('Cannot calculate book value per share - missing data:', {
         bookValue: metrics?.bookValue,
@@ -184,13 +191,14 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
       });
       return null;
     }
+    
     // Book Value Per Share = Total Shareholder Equity / Shares Outstanding
     const result = metrics.bookValue / metrics.sharesOutstanding;
     console.log(`Calculated book value per share: ${result}`);
     return result;
   };
 
-  const bookValuePerShare = calculateBookValuePerShare();
+  const bookValuePerShare = getBookValuePerShare();
 
   if (loading) {
     return <div className="p-4 bg-white rounded-lg shadow-md">Loading valuation metrics...</div>;
