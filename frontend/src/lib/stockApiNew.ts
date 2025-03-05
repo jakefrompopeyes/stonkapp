@@ -548,7 +548,6 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     // Initialize variables
     let sharesOutstanding = data.metric?.sharesOutstanding;
     let bookValue: number | undefined = undefined;
-    let bookValuePerShare: number | undefined = undefined;
     
     console.log(`Initial shares outstanding from Finnhub: ${sharesOutstanding}`);
     
@@ -606,30 +605,18 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       }
     }
     
-    // CALCULATE BOOK VALUE PER SHARE: Outstanding Shares / Shareholder Equity (REVERSED)
-    if (bookValue && sharesOutstanding) {
-      bookValuePerShare = sharesOutstanding / bookValue;
-      console.log(`BOOK VALUE PER SHARE CALCULATION (REVERSED): ${sharesOutstanding} / ${bookValue} = ${bookValuePerShare}`);
-    } else {
-      console.log(`Cannot calculate book value per share - missing data:`, {
-        bookValue,
-        sharesOutstanding
-      });
-    }
-    
     // Log the final values
-    console.log(`Final values for ${ticker}:`, {
+    console.log(`Final raw values for ${ticker}:`, {
       ticker,
       peAnnual: data.metric?.peAnnual,
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
       bookValue,
-      sharesOutstanding,
-      bookValuePerShare
+      sharesOutstanding
     });
     
-    // Return the metrics
+    // Return the metrics WITHOUT calculating book value per share
     return {
       ticker: ticker,
       peAnnual: data.metric?.peAnnual,
@@ -637,8 +624,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
       bookValue: bookValue,
-      sharesOutstanding: sharesOutstanding,
-      bookValuePerShare: bookValuePerShare
+      sharesOutstanding: sharesOutstanding
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
