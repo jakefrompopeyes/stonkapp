@@ -34,35 +34,38 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         setLoading(true);
         setError(null);
         
+        console.log(`ValuationStats - Starting data fetch for ticker: ${ticker}`);
+        
         // Fetch data from APIs
         const [metricsData, stockDetails] = await Promise.all([
           getValuationMetrics(ticker),
           getStockDetails(ticker)
         ]);
         
-        console.log('ValuationStats - metrics data:', metricsData);
+        console.log('ValuationStats - FULL metrics data:', JSON.stringify(metricsData, null, 2));
+        console.log('ValuationStats - FULL stock details:', JSON.stringify(stockDetails, null, 2));
         console.log('ValuationStats - book value:', metricsData.bookValue);
         console.log('ValuationStats - shares outstanding:', metricsData.sharesOutstanding);
-        console.log('ValuationStats - stock details:', stockDetails);
-        console.log('ValuationStats - market cap:', stockDetails.market_cap);
+        console.log('ValuationStats - book value per share from API:', metricsData.bookValuePerShare);
         console.log('ValuationStats - stock details shares outstanding:', stockDetails.shares_outstanding);
         
         // If metrics doesn't have shares outstanding but stock details does, use that
         if (!metricsData.sharesOutstanding && stockDetails.shares_outstanding) {
-          metricsData.sharesOutstanding = stockDetails.shares_outstanding;
           console.log('Using shares outstanding from stock details:', stockDetails.shares_outstanding);
+          metricsData.sharesOutstanding = stockDetails.shares_outstanding;
+          
+          // Recalculate book value per share if we now have both values
+          if (metricsData.bookValue && !metricsData.bookValuePerShare) {
+            metricsData.bookValuePerShare = metricsData.bookValue / metricsData.sharesOutstanding;
+            console.log('Recalculated book value per share:', metricsData.bookValuePerShare);
+          }
         }
+        
+        console.log('ValuationStats - FINAL metrics data after adjustments:', JSON.stringify(metricsData, null, 2));
         
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
         
-        console.log('ValuationStats - book value:', metricsData.bookValue);
-        console.log('ValuationStats - market cap:', stockDetails.market_cap);
-        if (metricsData.bookValue && stockDetails.market_cap) {
-          console.log('ValuationStats - P/B ratio:', stockDetails.market_cap / metricsData.bookValue);
-        } else {
-          console.log('ValuationStats - Cannot calculate P/B ratio, missing data');
-        }
       } catch (err) {
         console.error('Error fetching valuation data:', err);
         setError('Failed to load valuation metrics');
@@ -110,11 +113,15 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     // Special case for Book Value Per Share
     if (label === 'Book Value Per Share') {
       console.log(`Rendering Book Value Per Share chart with value: ${ratio}`);
+      
       // For Book Value Per Share, use a fixed scale to show a portion of the circle
+      // Use a reasonable scale based on the value
+      const maxValue = ratio * 3; // 3x the value for scale
+      
       return {
         datasets: [
           {
-            data: [1, 2], // 1/3 of the circle filled
+            data: [ratio, maxValue - ratio], // Show the value as a portion of the circle
             backgroundColor: ['#3b82f6', '#e0e0e0'], // Blue color
             borderWidth: 0,
           },
@@ -177,6 +184,8 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   // Use book value per share directly from the API if available
   const getBookValuePerShare = () => {
+    console.log('getBookValuePerShare called with metrics:', metrics);
+    
     // First try to use the pre-calculated value from the API
     if (metrics?.bookValuePerShare) {
       console.log(`Using pre-calculated book value per share from API: ${metrics.bookValuePerShare}`);
@@ -199,6 +208,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
   };
 
   const bookValuePerShare = getBookValuePerShare();
+  console.log('Final bookValuePerShare value:', bookValuePerShare);
 
   if (loading) {
     return <div className="p-4 bg-white rounded-lg shadow-md">Loading valuation metrics...</div>;
@@ -248,7 +258,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
             />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
               <span className="text-lg font-bold">
-                {bookValuePerShare ? `$${bookValuePerShare.toFixed(2)}` : 'N/A'}
+                {bookValuePerShare ? `$${Number(bookValuePerShare).toFixed(2)}` : 'N/A'}
               </span>
               <span className="text-xs text-gray-500">Book Value/Share</span>
             </div>
