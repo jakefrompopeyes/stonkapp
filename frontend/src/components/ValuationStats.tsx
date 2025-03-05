@@ -80,14 +80,10 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   // Helper function to create donut chart data
   const createDonutData = (ratio: number | null, marketCapValue: number | null, label: string) => {
-    console.log(`createDonutData called with ratio: ${ratio}, marketCapValue: ${marketCapValue}, label: ${label}`);
-    
-    // Special case for Book Value where we're passing the raw value
+    // Special case for Book Value - we want to display the raw value
     if (label === 'Book Value') {
       if (!ratio || ratio <= 0) {
-        console.log(`createDonutData returning 'No Data' for ${label} because value is invalid`);
         return {
-          labels: ['No Data'],
           datasets: [
             {
               data: [1],
@@ -95,37 +91,26 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
               borderWidth: 0,
             },
           ],
+          labels: ['No Data'],
         };
       }
       
-      console.log(`createDonutData using raw value: ${ratio} for ${label}`);
-      
-      // For Book Value, we'll just show the value itself with a fixed maximum
-      const maxValue = ratio * 2; // Use twice the book value as the maximum
-      const remainingValue = maxValue - ratio;
-      
-      console.log(`createDonutData maxValue: ${maxValue}, remainingValue: ${remainingValue} for ${label}`);
-      
+      // For Book Value, we'll use the raw value directly
       return {
-        labels: [label, ''],
         datasets: [
           {
-            data: [ratio, remainingValue],
-            backgroundColor: [
-              '#4F46E5', // Indigo for the value
-              '#E5E7EB', // Light gray for the remaining space
-            ],
+            data: [ratio, ratio], // Use the book value itself for visualization
+            backgroundColor: ['#4caf50', '#e0e0e0'],
             borderWidth: 0,
           },
         ],
+        labels: [label, 'Remaining'],
       };
     }
     
-    // Original logic for other ratios
-    if (!ratio || ratio <= 0 || !marketCapValue || marketCapValue <= 0) {
-      console.log(`createDonutData returning 'No Data' for ${label} because ratio or marketCapValue is invalid`);
+    // For other ratios (PE, PS, etc.)
+    if (!ratio || ratio <= 0 || !marketCapValue) {
       return {
-        labels: ['No Data'],
         datasets: [
           {
             data: [1],
@@ -133,30 +118,20 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
             borderWidth: 0,
           },
         ],
+        labels: ['No Data'],
       };
     }
 
-    // Calculate market cap divided by the ratio
-    const value = marketCapValue / ratio;
-    console.log(`createDonutData calculated value: ${value} for ${label}`);
-    
-    // Set a reasonable maximum value based on the type of ratio
-    const maxValue = label.includes('PE') ? marketCapValue / 10 : marketCapValue / 3;
-    const remainingValue = Math.max(0, maxValue - value);
-    console.log(`createDonutData maxValue: ${maxValue}, remainingValue: ${remainingValue} for ${label}`);
-
+    const remaining = marketCapValue - ratio;
     return {
-      labels: [label, ''],
       datasets: [
         {
-          data: [value, remainingValue],
-          backgroundColor: [
-            '#4F46E5', // Indigo for the value
-            '#E5E7EB', // Light gray for the remaining space
-          ],
+          data: [ratio, remaining > 0 ? remaining : 0],
+          backgroundColor: ['#4caf50', '#e0e0e0'],
           borderWidth: 0,
         },
       ],
+      labels: [label, 'Remaining'],
     };
   };
 
@@ -216,13 +191,10 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         </div>
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            {/* Debug log for P/B chart rendering */}
-            {(() => { console.log('Rendering P/B chart - bookValue:', metrics.bookValue, 'marketCap:', marketCap); return null; })()}
             <Doughnut 
               data={createDonutData(
-                // Just pass the raw book value directly, not as a ratio with market cap
                 metrics.bookValue ?? null, 
-                null, // Not using market cap for this calculation
+                null,
                 'Book Value'
               )} 
               options={chartOptions} 
