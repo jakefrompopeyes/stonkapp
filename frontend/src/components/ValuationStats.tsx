@@ -41,7 +41,9 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         ]);
         
         console.log('ValuationStats - metrics data:', metricsData);
+        console.log('ValuationStats - book value:', metricsData.bookValue);
         console.log('ValuationStats - stock details:', stockDetails);
+        console.log('ValuationStats - market cap:', stockDetails.market_cap);
         
         setMetrics(metricsData);
         setMarketCap(stockDetails.market_cap || null);
@@ -79,37 +81,12 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
   };
 
   // Helper function to create donut chart data
-  const createDonutData = (ratio: number | null, marketCapValue: number | null, label: string) => {
-    // Special case for Book Value - we want to display the raw value
-    if (label === 'Book Value') {
-      if (!ratio || ratio <= 0) {
-        return {
-          datasets: [
-            {
-              data: [1],
-              backgroundColor: ['#e0e0e0'],
-              borderWidth: 0,
-            },
-          ],
-          labels: ['No Data'],
-        };
-      }
-      
-      // For Book Value, we'll use the raw value directly
-      return {
-        datasets: [
-          {
-            data: [ratio, ratio], // Use the book value itself for visualization
-            backgroundColor: ['#4caf50', '#e0e0e0'],
-            borderWidth: 0,
-          },
-        ],
-        labels: [label, 'Remaining'],
-      };
-    }
+  const createDonutData = (ratio: number | null, label: string) => {
+    console.log(`Creating donut data for ${label} with value:`, ratio);
     
-    // For other ratios (PE, PS, etc.)
-    if (!ratio || ratio <= 0 || !marketCapValue) {
+    // If no data is available
+    if (!ratio || ratio <= 0) {
+      console.log(`No valid data for ${label}, showing empty chart`);
       return {
         datasets: [
           {
@@ -121,17 +98,52 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         labels: ['No Data'],
       };
     }
-
-    const remaining = marketCapValue - ratio;
+    
+    // Special case for Book Value
+    if (label === 'Book Value') {
+      console.log(`Rendering Book Value chart with value: ${ratio}`);
+      // For Book Value, use a fixed scale to show a portion of the circle
+      return {
+        datasets: [
+          {
+            data: [1, 2], // 1/3 of the circle filled
+            backgroundColor: ['#4caf50', '#e0e0e0'],
+            borderWidth: 0,
+          },
+        ],
+        labels: [label, 'Scale'],
+      };
+    }
+    
+    // For PE and PS ratios
+    console.log(`Rendering ${label} chart with ratio: ${ratio}`);
+    
+    // Calculate how much of the chart to fill based on the ratio
+    // Lower ratios (better value) should fill more of the chart
+    let fillPercentage;
+    if (label === 'PE Annual') {
+      // For PE, consider anything below 15 as good value
+      fillPercentage = Math.min(1, 15 / Math.max(1, ratio));
+    } else {
+      // For PS, consider anything below 2 as good value
+      fillPercentage = Math.min(1, 2 / Math.max(0.1, ratio));
+    }
+    
+    // Convert to a ratio for the chart (filled vs empty)
+    const filledPart = fillPercentage * 3; // Scale for better visibility
+    const emptyPart = 3 - filledPart;
+    
+    console.log(`${label} fill calculation: ${fillPercentage} -> [${filledPart}, ${emptyPart}]`);
+    
     return {
       datasets: [
         {
-          data: [ratio, remaining > 0 ? remaining : 0],
+          data: [filledPart, emptyPart],
           backgroundColor: ['#4caf50', '#e0e0e0'],
           borderWidth: 0,
         },
       ],
-      labels: [label, 'Remaining'],
+      labels: [label, 'Scale'],
     };
   };
 
@@ -173,7 +185,10 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
       <div className="grid grid-cols-3 gap-4">
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(metrics.peAnnual ?? null, marketCap, 'PE Annual')} options={chartOptions} />
+            <Doughnut 
+              data={createDonutData(metrics.peAnnual ?? null, 'PE Annual')} 
+              options={chartOptions} 
+            />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
               <span className="text-lg font-bold">{metrics.peAnnual?.toFixed(1) || 'N/A'}x</span>
               <span className="text-xs text-gray-500">PE Annual</span>
@@ -182,7 +197,10 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         </div>
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut data={createDonutData(metrics.psAnnual ?? null, marketCap, 'PS Annual')} options={chartOptions} />
+            <Doughnut 
+              data={createDonutData(metrics.psAnnual ?? null, 'PS Annual')} 
+              options={chartOptions} 
+            />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
               <span className="text-lg font-bold">{metrics.psAnnual?.toFixed(1) || 'N/A'}x</span>
               <span className="text-xs text-gray-500">PS Annual</span>
@@ -192,11 +210,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
             <Doughnut 
-              data={createDonutData(
-                metrics.bookValue ?? null, 
-                null,
-                'Book Value'
-              )} 
+              data={createDonutData(metrics.bookValue ?? null, 'Book Value')} 
               options={chartOptions} 
             />
             <div className="absolute inset-0 flex items-center justify-center flex-col">

@@ -544,7 +544,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       psAnnual: data.metric?.psAnnual,
       evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
       evToRevenue: data.metric?.enterpriseValueOverRevenue,
-      bookValue: bookValue,
+      bookValue: bookValue, // Always include the hardcoded book value
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
