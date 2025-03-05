@@ -93,50 +93,31 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   // Helper function to create donut chart data
   const createDonutData = (ratio: number | null, label: string) => {
-    console.log(`Creating donut data for ${label} with value:`, ratio);
+    console.log(`Creating donut data for ${label} with ratio: ${ratio}`);
     
-    // If no data is available
-    if (!ratio || ratio <= 0) {
-      console.log(`No valid data for ${label}, showing empty chart`);
+    if (ratio === null) {
+      console.log(`${label} ratio is null, returning 'No Data'`);
       return {
         datasets: [
           {
-            data: [1],
-            backgroundColor: ['#e0e0e0'],
+            data: [1, 0],
+            backgroundColor: ['#e0e0e0', '#e0e0e0'], // Gray color
             borderWidth: 0,
           },
         ],
-        labels: ['No Data'],
+        labels: ['No Data', ''],
       };
     }
     
-    // Special case for Book Value Per Share
+    let fillPercentage = 0;
+    
     if (label === 'Book Value Per Share') {
-      console.log(`Rendering Book Value Per Share chart with value: ${ratio}`);
-      
-      // For Book Value Per Share, use a fixed scale to show a portion of the circle
-      // Use a reasonable scale based on the value
-      const maxValue = ratio * 3; // 3x the value for scale
-      
-      return {
-        datasets: [
-          {
-            data: [ratio, maxValue - ratio], // Show the value as a portion of the circle
-            backgroundColor: ['#3b82f6', '#e0e0e0'], // Blue color
-            borderWidth: 0,
-          },
-        ],
-        labels: [label, 'Scale'],
-      };
-    }
-    
-    // For PE and PS ratios
-    console.log(`Rendering ${label} chart with ratio: ${ratio}`);
-    
-    // Calculate how much of the chart to fill based on the ratio
-    // Lower ratios (better value) should fill more of the chart
-    let fillPercentage;
-    if (label === 'PE Annual') {
+      // For Book Value Per Share, we're displaying the raw value, not a ratio
+      // So we'll create a scale based on the value itself
+      // Higher book value is better, so we'll fill more of the chart for higher values
+      fillPercentage = Math.min(1, ratio / 100); // Scale for better visibility
+      console.log(`Book Value Per Share fill calculation: ${fillPercentage}`);
+    } else if (label === 'P/E') {
       // For PE, consider anything below 15 as good value
       fillPercentage = Math.min(1, 15 / Math.max(1, ratio));
     } else {
@@ -224,45 +205,53 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Valuation Stats</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <h2 className="text-xl font-semibold mb-4">Valuation Metrics</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* PE Ratio */}
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut 
-              data={createDonutData(metrics.peAnnual ?? null, 'PE Annual')} 
-              options={chartOptions} 
-            />
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{metrics.peAnnual?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">PE Annual</span>
+            <Doughnut data={createDonutData(metrics?.peAnnual || null, 'P/E')} options={chartOptions} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-sm font-medium">P/E</span>
+              <span className="text-lg font-bold">{metrics?.peAnnual ? metrics.peAnnual.toFixed(2) : 'N/A'}</span>
             </div>
           </div>
+          <p className="mt-2 text-sm text-gray-600 text-center">
+            Price to Earnings ratio. Lower values may indicate better value.
+          </p>
         </div>
+
+        {/* PS Ratio */}
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
-            <Doughnut 
-              data={createDonutData(metrics.psAnnual ?? null, 'PS Annual')} 
-              options={chartOptions} 
-            />
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-lg font-bold">{metrics.psAnnual?.toFixed(1) || 'N/A'}x</span>
-              <span className="text-xs text-gray-500">PS Annual</span>
+            <Doughnut data={createDonutData(metrics?.psAnnual || null, 'P/S')} options={chartOptions} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-sm font-medium">P/S</span>
+              <span className="text-lg font-bold">{metrics?.psAnnual ? metrics.psAnnual.toFixed(2) : 'N/A'}</span>
             </div>
           </div>
+          <p className="mt-2 text-sm text-gray-600 text-center">
+            Price to Sales ratio. Lower values may indicate better value.
+          </p>
         </div>
+
+        {/* Book Value Per Share */}
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 relative">
             <Doughnut 
               data={createDonutData(bookValuePerShare, 'Book Value Per Share')} 
               options={chartOptions} 
             />
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-sm font-medium">Book Value</span>
               <span className="text-lg font-bold">
                 {bookValuePerShare ? `$${Number(bookValuePerShare).toFixed(2)}` : 'N/A'}
               </span>
-              <span className="text-xs text-gray-500">Book Value/Share</span>
             </div>
           </div>
+          <p className="mt-2 text-sm text-gray-600 text-center">
+            Book Value Per Share = Shareholder Equity / Outstanding Shares
+          </p>
         </div>
       </div>
       <div className="mt-4 text-sm text-gray-500">

@@ -620,7 +620,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
       console.log(`Calculated book value from P/B ratio: ${bookValue}`);
     }
     
-    // Calculate book value per share
+    // Calculate book value per share - CORRECT FORMULA: Book Value Per Share = Shareholder Equity / Outstanding Shares
     if (bookValue && sharesOutstanding) {
       bookValuePerShare = bookValue / sharesOutstanding;
       console.log(`Calculated book value per share for ${ticker}: ${bookValuePerShare}`);
@@ -629,12 +629,6 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
         bookValue,
         sharesOutstanding
       });
-    }
-    
-    // For testing purposes, if we still don't have book value per share, use a hardcoded value
-    if (!bookValuePerShare) {
-      bookValuePerShare = 25.75; // Hardcoded value for testing
-      console.log(`Using hardcoded book value per share for ${ticker}: ${bookValuePerShare}`);
     }
     
     console.log(`Final values for ${ticker}:`, {
@@ -656,10 +650,9 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     };
   } catch (error) {
     console.error(`Error fetching valuation metrics for ${ticker}:`, error);
-    // Return a minimal valid ValuationMetrics object with a hardcoded book value per share for testing
+    // Return a minimal valid ValuationMetrics object without hardcoded values
     return {
-      ticker: ticker,
-      bookValuePerShare: 25.75 // Hardcoded value for testing
+      ticker: ticker
     };
   }
 }; 
