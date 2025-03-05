@@ -80,7 +80,10 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
   // Helper function to create donut chart data
   const createDonutData = (ratio: number | null, marketCapValue: number | null, label: string) => {
+    console.log(`createDonutData called with ratio: ${ratio}, marketCapValue: ${marketCapValue}, label: ${label}`);
+    
     if (!ratio || ratio <= 0 || !marketCapValue || marketCapValue <= 0) {
+      console.log(`createDonutData returning 'No Data' for ${label} because ratio or marketCapValue is invalid`);
       return {
         labels: ['No Data'],
         datasets: [
@@ -95,10 +98,12 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
 
     // Calculate market cap divided by the ratio
     const value = marketCapValue / ratio;
+    console.log(`createDonutData calculated value: ${value} for ${label}`);
     
     // Set a reasonable maximum value based on the type of ratio
     const maxValue = label.includes('PE') ? marketCapValue / 10 : marketCapValue / 3;
     const remainingValue = Math.max(0, maxValue - value);
+    console.log(`createDonutData maxValue: ${maxValue}, remainingValue: ${remainingValue} for ${label}`);
 
     return {
       labels: [label, ''],
@@ -173,7 +178,16 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
           <div className="w-32 h-32 relative">
             {/* Debug log for P/B chart rendering */}
             {(() => { console.log('Rendering P/B chart - bookValue:', metrics.bookValue, 'marketCap:', marketCap); return null; })()}
-            <Doughnut data={createDonutData(metrics.bookValue ? marketCap / metrics.bookValue : null, marketCap, 'P/B Ratio')} options={chartOptions} />
+            <Doughnut 
+              data={createDonutData(
+                // For P/B ratio, we need to pass the actual P/B ratio value
+                // The createDonutData function expects a ratio, not a value to be divided
+                metrics.bookValue && marketCap ? marketCap / metrics.bookValue : null, 
+                marketCap, 
+                'P/B Ratio'
+              )} 
+              options={chartOptions} 
+            />
             <div className="absolute inset-0 flex items-center justify-center flex-col">
               <span className="text-lg font-bold">{metrics.bookValue && marketCap ? (marketCap / metrics.bookValue).toFixed(1) : 'N/A'}x</span>
               <span className="text-xs text-gray-500">P/B Ratio</span>
