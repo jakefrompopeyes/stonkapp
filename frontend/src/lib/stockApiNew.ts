@@ -23,6 +23,7 @@ export interface StockDetails {
   market_cap?: number;
   total_employees?: number;
   list_date?: string;
+  shares_outstanding?: number; // Add shares outstanding
   address?: {
     address1?: string;
     city?: string;
@@ -36,6 +37,7 @@ export interface StockDetails {
   };
   sic_code?: string;
   sic_description?: string;
+  locale?: string;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -174,56 +176,49 @@ export const searchStocks = async (query: string): Promise<StockSearchResult[]> 
  */
 export const getStockDetails = async (ticker: string): Promise<StockDetails> => {
   try {
-    const response = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apikey=${POLYGON_API_KEY}`);
+    // Fetch data from Polygon API
+    const response = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apiKey=${POLYGON_API_KEY}`);
     
     if (!response.ok) {
-      console.error(`Error fetching details for ${ticker}:`, response.status, response.statusText);
+      console.error(`Error fetching stock details for ${ticker}:`, response.status, response.statusText);
       throw new Error(`Failed to fetch stock details for ${ticker}`);
     }
     
     const data = await response.json();
-    const item = data.results;
     
-    // Return only the essential properties
+    // Also fetch valuation metrics to get shares outstanding
+    const valuationMetrics = await getValuationMetrics(ticker);
+    
+    // Map the response to our StockDetails interface
     return {
-      ticker: item.ticker || ticker,
-      name: item.name || ticker,
-      description: item.description || `${item.name || ticker} (${ticker})`,
-      market: item.market || 'stocks',
-      type: item.type || 'CS',
-      active: item.active || true,
-      // Additional properties used in the stock details page
-      market_cap: item.market_cap,
-      total_employees: item.total_employees,
-      list_date: item.list_date,
-      address: item.address,
-      homepage_url: item.homepage_url,
-      branding: item.branding ? {
-        logo_url: item.branding.logo_url,
-        icon_url: item.branding.icon_url
-      } : undefined,
-      sic_code: item.sic_code,
-      sic_description: item.sic_description
+      ticker: data.results.ticker,
+      name: data.results.name,
+      description: data.results.description,
+      market: data.results.market,
+      type: data.results.type,
+      active: data.results.active,
+      market_cap: data.results.market_cap,
+      total_employees: data.results.total_employees,
+      list_date: data.results.list_date,
+      shares_outstanding: valuationMetrics.sharesOutstanding, // Add shares outstanding from valuation metrics
+      address: data.results.address,
+      homepage_url: data.results.homepage_url,
+      branding: data.results.branding,
+      sic_code: data.results.sic_code,
+      sic_description: data.results.sic_description,
+      locale: data.results.locale,
     };
   } catch (error) {
-    console.error(`Error fetching details for ${ticker}:`, error);
+    console.error(`Error fetching stock details for ${ticker}:`, error);
     // Return a minimal valid StockDetails object
     return {
       ticker: ticker,
       name: ticker,
-      description: `Information for ${ticker} is currently unavailable`,
-      market: 'stocks',
-      type: 'CS',
+      description: '',
+      market: '',
+      type: '',
       active: true,
-      // Additional properties used in the stock details page
-      market_cap: undefined,
-      total_employees: undefined,
-      list_date: undefined,
-      address: undefined,
-      homepage_url: undefined,
-      branding: undefined,
-      sic_code: undefined,
-      sic_description: undefined
+      shares_outstanding: undefined, // Add shares outstanding field
     };
   }
 };

@@ -369,6 +369,12 @@ export default function StockDetailPage() {
                     </span>
                   </div>
                   <div>
+                    <span className="text-gray-600">Shares Outstanding: </span>
+                    <span className="font-medium text-gray-800">
+                      {formatLargeNumber(stockDetails.shares_outstanding)}
+                    </span>
+                  </div>
+                  <div>
                     <span className="text-gray-600">Employees: </span>
                     <span className="font-medium text-gray-800">
                       {formatLargeNumber(stockDetails.total_employees)}
