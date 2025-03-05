@@ -536,7 +536,7 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     console.log(`Finnhub data for ${ticker}:`, data.metric);
     
     // Import the FMP API functions
-    const { getKeyMetricsTTM, getFinancialRatiosTTM } = await import('@/lib/fmpApi');
+    const { getKeyMetricsTTM, getFinancialRatiosTTM, getFinancialStatements } = await import('@/lib/fmpApi');
     
     // Fetch key metrics data from FMP API
     const keyMetrics = await getKeyMetricsTTM(ticker);
@@ -586,6 +586,32 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
         }
       } else {
         console.log(`Could not calculate book value from financial ratios either`);
+        
+        // Try to get book value from balance sheet data
+        try {
+          console.log(`Attempting to get book value from balance sheet data`);
+          // Get the most recent balance sheet
+          const financialStatements = await getFinancialStatements(ticker);
+          console.log(`Financial statements:`, financialStatements);
+          
+          if (financialStatements && financialStatements.length > 0) {
+            // Get the most recent statement
+            const latestStatement = financialStatements[0];
+            console.log(`Latest financial statement:`, latestStatement);
+            
+            // Check if we have balance sheet data with total equity
+            if (latestStatement.financials?.balance_sheet?.equity) {
+              bookValue = latestStatement.financials.balance_sheet.equity;
+              console.log(`Found book value (total equity) from balance sheet: ${bookValue}`);
+            } else {
+              console.log(`No equity data found in balance sheet`);
+            }
+          } else {
+            console.log(`No financial statements found`);
+          }
+        } catch (err) {
+          console.error(`Error fetching balance sheet data:`, err);
+        }
       }
     }
     
