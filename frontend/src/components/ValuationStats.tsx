@@ -113,7 +113,6 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     
     if (label === 'Book Value Per Share') {
       // For Book Value Per Share, we're displaying the raw value, not a ratio
-      // So we'll create a scale based on the value itself
       // Higher book value is better, so we'll fill more of the chart for higher values
       fillPercentage = Math.min(1, ratio / 100); // Scale for better visibility
       console.log(`Book Value Per Share fill calculation: ${fillPercentage}`);
@@ -163,33 +162,9 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     },
   };
 
-  // Use book value per share directly from the API if available
-  const getBookValuePerShare = () => {
-    console.log('getBookValuePerShare called with metrics:', metrics);
-    
-    // First try to use the pre-calculated value from the API
-    if (metrics?.bookValuePerShare) {
-      console.log(`Using pre-calculated book value per share from API: ${metrics.bookValuePerShare}`);
-      return metrics.bookValuePerShare;
-    }
-    
-    // Otherwise calculate it ourselves
-    if (!metrics?.bookValue || !metrics?.sharesOutstanding) {
-      console.log('Cannot calculate book value per share - missing data:', {
-        bookValue: metrics?.bookValue,
-        sharesOutstanding: metrics?.sharesOutstanding
-      });
-      return null;
-    }
-    
-    // Book Value Per Share = Total Shareholder Equity / Shares Outstanding
-    const result = metrics.bookValue / metrics.sharesOutstanding;
-    console.log(`Calculated book value per share: ${result}`);
-    return result;
-  };
-
-  const bookValuePerShare = getBookValuePerShare();
-  console.log('Final bookValuePerShare value:', bookValuePerShare);
+  // Get book value per share directly from the API
+  const bookValuePerShare = metrics?.bookValuePerShare || null;
+  console.log('Book Value Per Share from API:', bookValuePerShare);
 
   if (loading) {
     return <div className="p-4 bg-white rounded-lg shadow-md">Loading valuation metrics...</div>;
