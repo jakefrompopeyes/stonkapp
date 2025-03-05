@@ -174,7 +174,7 @@ const ValuationStats: React.FC<ValuationStatsProps> = ({ ticker }) => {
     return <div className="p-4 bg-white rounded-lg shadow-md text-red-500">{error}</div>;
   }
 
-  if (!metrics || !marketCap) {
+  if (!metrics) {
     return <div className="p-4 bg-white rounded-lg shadow-md">No valuation data available</div>;
   }
 

@@ -543,19 +543,23 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     }
     
     const data = await response.json();
+    console.log(`Finnhub API response for ${ticker}:`, data);
     
     // Initialize variables
     let sharesOutstanding = data.metric?.sharesOutstanding;
     let bookValue: number | undefined = undefined;
     let bookValuePerShare: number | undefined = undefined;
     
+    console.log(`Initial shares outstanding from Finnhub: ${sharesOutstanding}`);
+    
     // Get stock details from Polygon API to get shares outstanding and shareholder equity
     try {
+      console.log(`Fetching Polygon data for ${ticker}...`);
       const polygonResponse = await fetch(`${POLYGON_BASE_URL}/v3/reference/tickers/${ticker}?apiKey=${POLYGON_API_KEY}`);
       
       if (polygonResponse.ok) {
         const polygonData = await polygonResponse.json();
-        console.log(`Polygon data for ${ticker}:`, polygonData.results);
+        console.log(`Polygon API response for ${ticker}:`, polygonData);
         
         // Get shares outstanding from Polygon
         if (polygonData.results?.share_class_shares_outstanding) {
@@ -567,7 +571,11 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
         if (polygonData.results?.total_shareholders_equity) {
           bookValue = polygonData.results.total_shareholders_equity;
           console.log(`Using total shareholder equity from Polygon API: ${bookValue}`);
+        } else {
+          console.log(`No total_shareholders_equity found in Polygon data for ${ticker}`);
         }
+      } else {
+        console.error(`Polygon API request failed: ${polygonResponse.status} ${polygonResponse.statusText}`);
       }
     } catch (err) {
       console.error(`Error fetching data from Polygon:`, err);
@@ -576,15 +584,22 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
     // If we don't have book value yet, try to get it from financial statements
     if (!bookValue) {
       try {
+        console.log(`Fetching financial data for ${ticker}...`);
         const financialData = await getFinancialData(ticker);
+        console.log(`Financial data for ${ticker}:`, financialData);
         
         if (financialData && financialData.length > 0) {
           const latestStatement = financialData[0];
+          console.log(`Latest financial statement for ${ticker}:`, latestStatement);
           
           if (latestStatement.financials?.balance_sheet?.equity) {
             bookValue = latestStatement.financials.balance_sheet.equity;
             console.log(`Using total shareholder equity from balance sheet: ${bookValue}`);
+          } else {
+            console.log(`No equity found in balance sheet for ${ticker}`);
           }
+        } else {
+          console.log(`No financial data found for ${ticker}`);
         }
       } catch (err) {
         console.error(`Error fetching financial data:`, err);
@@ -601,6 +616,18 @@ export const getValuationMetrics = async (ticker: string): Promise<ValuationMetr
         sharesOutstanding
       });
     }
+    
+    // Log the final values
+    console.log(`Final values for ${ticker}:`, {
+      ticker,
+      peAnnual: data.metric?.peAnnual,
+      psAnnual: data.metric?.psAnnual,
+      evToEBITDA: data.metric?.enterpriseValueOverEBITDA,
+      evToRevenue: data.metric?.enterpriseValueOverRevenue,
+      bookValue,
+      sharesOutstanding,
+      bookValuePerShare
+    });
     
     // Return the metrics
     return {
